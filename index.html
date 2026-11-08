@@ -280,10 +280,9 @@ function viewRegister(){
       <label for="church">Church<input id="church" placeholder="e.g. Nkosi Memorial AME Church"></label>
       <div class="grid2">
         <label for="district">District<input id="district" placeholder="e.g. Capital District"></label>
-        <label for="conference">Conference<input id="conference" list="confs" placeholder="e.g. M.M. Mokone Memorial Conference"></label>
+        <label for="conference">Conference<select id="conference">${confOpts("")}</select></label>
       </div>
-      <datalist id="confs"><option>M.M. Mokone Memorial Conference</option></datalist>
-      <div class="grid2">
+            <div class="grid2">
         <label for="designation">Designation<input id="designation" list="desigs" placeholder="e.g. Pastor, Steward"></label>
         <label for="auxiliary">Auxiliary<select id="auxiliary"><option value="">Choose</option><option>WMS</option><option>Lay Organization</option><option>Sons of Allen</option><option>ACE League</option><option>CMLF</option><option>RAYAC</option><option>YPD</option><option>Christian Education</option><option>None</option></select></label>
       </div>
@@ -358,7 +357,7 @@ async function viewParking(regCode){
       </div>
       <div class="grid2">
         <label for="pphone">WhatsApp number<input id="pphone" inputmode="tel" value="${esc(pre.mobile||"")}"></label>
-        <label for="pconf">Conference<input id="pconf" value="${esc(pre.conference||"")}"></label>
+        <label for="pconf">Conference<select id="pconf">${confOpts(pre.conference||"")}</select></label>
       </div>
       <div class="grid2">
         <label for="pplate">Car registration<input id="pplate" class="plate-in" placeholder="FTG 812 NW" autocomplete="off"></label>
@@ -385,6 +384,8 @@ function bankBlock(code){const B=CONFIG.BANK;return `<div style="width:100%;disp
   <div class="row"><button class="ghost" data-copy="${esc(B.accountNumber)}">Copy account no.</button><button class="ghost" data-copy="${esc(code)}">Copy reference</button></div>
   <p class="small muted" style="text-align:left">Use <b>${esc(code)}</b> as your reference. After paying, tap the green button to send your proof of payment to <b>${esc(CONFIG.CONTACT.name)}, ${esc(CONFIG.CONTACT.phone)}</b> on WhatsApp. Your pass turns green once payment is confirmed.</p>
   <a class="btn okb" target="_blank" rel="noopener" href="https://wa.me/${waNum(CONFIG.CONTACT.phone)}?text=${encodeURIComponent("Good day "+CONFIG.CONTACT.name+". Here is my proof of payment for parking at "+CONFIG.HOST+", "+CONFIG.DATES+". Pass code: "+code+". I will attach the proof of payment.")}">Send proof of payment on WhatsApp</a></div>`}
+const CONFS=["Natal Conference","East Conference","Orangia Conference","West Conference","M.M. Mokone Memorial Conference","Other"];
+function confOpts(sel){return '<option value="">Choose your conference</option>'+CONFS.map(c=>`<option ${c===sel?"selected":""}>${esc(c)}</option>`).join("")}
 function waNum(p){const d=digits(p);return d.startsWith("0")?"27"+d.slice(1):d}
 async function viewPass(code){
   let r;try{r=await api("getPass",{code})}catch(e){app(shell(`<section class="panel"><h2>Pass not found</h2><p class="muted">${esc(e.message)}</p><a class="btn" href="#find">Find my ticket</a></section>`,""));return}
