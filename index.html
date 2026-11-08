@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Planning Meeting 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#eef0f4;--surface:#fff;--ink:#151c2e;--muted:#5b6478;--line:#d8dce5;
+  --navy:#1c2a6b;--brass:#b8862b;--brass-soft:#f4ead6;
+  --ok:#1f7a4d;--ok-soft:#dff2e8;--warn:#9a6200;--warn-soft:#fbefd6;--bad:#a3302a;--bad-soft:#f8e0de;
+  --f-display:"Familjen Grotesk","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1320;--surface:#171e2f;--ink:#e8ebf2;--muted:#9aa3b6;--line:#2a3348;--navy:#2e408f;--brass:#d9a54a;--brass-soft:#2e2715;
+  --ok:#5fcf95;--ok-soft:#163326;--warn:#f0b74f;--warn-soft:#33280f;--bad:#f08a82;--bad-soft:#3a1c1a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1320;--surface:#171e2f;--ink:#e8ebf2;--muted:#9aa3b6;--line:#2a3348;--navy:#2e408f;--brass:#d9a54a;--brass-soft:#2e2715;
+  --ok:#5fcf95;--ok-soft:#163326;--warn:#f0b74f;--warn-soft:#33280f;--bad:#f08a82;--bad-soft:#3a1c1a;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:580px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:18px}
+.wide{max-width:1000px}
+.hero{background:var(--navy);color:#fff;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:6px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;border:2px solid rgba(255,255,255,.12);box-shadow:0 0 0 22px rgba(255,255,255,.05),0 0 0 44px rgba(255,255,255,.03)}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#e6c27d}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,6vw,34px);line-height:1.08;margin:0}
+h2{font-family:var(--f-display);font-weight:600;font-size:20px;margin:0}
+h3{font-family:var(--f-display);font-weight:600;font-size:16px;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}.small{font-size:13px}
+.hero .facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.hero .fact{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 11px;font-size:13px}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
+nav.tabs a{font-size:14px;padding:8px 12px;border-radius:9px;color:var(--muted);text-decoration:none;border:1px solid transparent}
+nav.tabs a[aria-current="page"]{background:var(--surface);color:var(--ink);border-color:var(--line);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px}
+form{display:flex;flex-direction:column;gap:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.grid2>*{min-width:0}
+@media (max-width:460px){.grid2{grid-template-columns:1fr}}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600}
+.hint{font-weight:400;color:var(--muted)}
+input,select{font:inherit;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%}
+input:focus,select:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.plate-in{font-family:var(--f-mono);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.check{flex-direction:row;align-items:flex-start;gap:10px;font-weight:400}.check input{width:auto;margin-top:3px}
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.types label{border:1px solid var(--line);border-radius:10px;padding:10px;flex-direction:row;align-items:center;gap:8px;cursor:pointer;font-weight:600}
+.types input{width:auto}
+.types label:has(input:checked){border-color:var(--navy);background:var(--brass-soft)}
+@media (max-width:420px){.types{grid-template-columns:1fr}}
+button,.btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:12px 16px;cursor:pointer;background:var(--navy);color:#fff;text-align:center;text-decoration:none;display:inline-block}
+.ghost{background:transparent!important;color:var(--ink)!important;border:1px solid var(--line)!important}
+.brass{background:var(--brass);color:#1a1405}
+.okb{background:var(--ok);color:#fff}
+button:disabled{opacity:.55;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.err{color:var(--bad);font-size:13px}
+.note{border-radius:10px;padding:12px 14px;font-size:14px;background:var(--brass-soft)}
+.note.demo{background:var(--warn-soft)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.room{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:6px}
+.room b{font-family:var(--f-display);font-size:17px}
+.room span{font-size:13px;color:var(--muted)}
+.room .ic{font-size:24px}
+.ticket{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.ticket-head{background:var(--navy);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.ticket-head h2{color:#fff;font-size:18px}
+.ticket-body{padding:18px;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center}
+.perf{border-top:2px dashed var(--line);margin:0 14px}
+.plate{background:#fbfbf7;color:#111;border:3px solid #111;border-radius:8px;padding:6px 18px 4px;font-family:var(--f-mono);font-weight:700;font-size:clamp(24px,7vw,32px);letter-spacing:.08em;display:inline-flex;flex-direction:column;align-items:center;line-height:1.1}
+.plate small{font-size:9px;letter-spacing:.2em;font-weight:500}
+.qr{background:#fff;padding:10px;border-radius:10px;display:inline-block}
+.code{font-family:var(--f-mono);font-weight:700;font-size:22px;letter-spacing:.14em}
+.who strong{font-family:var(--f-display);font-size:18px;display:block}
+.status{font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:6px 12px;border-radius:999px;display:inline-block}
+.st-pending{background:var(--warn-soft);color:var(--warn)}.st-paid,.st-reg{background:var(--ok-soft);color:var(--ok)}.st-in{background:var(--brass-soft);color:var(--ink)}
+.bay{font-family:var(--f-display);font-weight:700;font-size:18px;border:2px solid var(--navy);border-radius:10px;padding:6px 14px}
+.verdict{width:100%;border-radius:12px;padding:16px;font-family:var(--f-display);font-size:22px;font-weight:700}
+.v-ok{background:var(--ok-soft);color:var(--ok)}.v-warn{background:var(--warn-soft);color:var(--warn)}.v-in{background:var(--brass-soft)}
+.pay{width:100%;text-align:left;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0}
+.pay dt{color:var(--muted)}.pay dd{margin:0;font-weight:600;overflow-wrap:anywhere}.mono{font-family:var(--f-mono)}
+.bays{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bayc{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.bayc b{font-family:var(--f-display);font-size:22px}
+.bayc span{font-size:12px;color:var(--muted)}
+.meter{height:8px;border-radius:5px;background:var(--line);overflow:hidden}.meter i{display:block;height:100%;background:var(--brass)}
+@media (max-width:420px){.bays{grid-template-columns:1fr}}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column}
+.kpi span{font-size:12px;color:var(--muted)}.kpi b{font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:760px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--bg)}
+td button{padding:6px 10px;font-size:12px;border-radius:7px}
+.tag{font-size:10px;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:5px;background:var(--brass-soft);color:var(--ink)}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:minmax(0,1.2fr) 2fr auto;gap:10px;align-items:center;font-size:13px}
+.bar .track{height:8px;background:var(--line);border-radius:5px;overflow:hidden}.bar .track i{display:block;height:100%;background:var(--navy)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:20}
+.blessing{font-style:italic;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" hidden></div>
+<script>
+/* ============ SETTINGS ============ */
+const CONFIG={
+  API_URL:"https://script.google.com/macros/s/AKfycbzEC7iKmpth4-49of8HKGMdwk__d1zkV6y9cEUZESVeUu-_bNqoIkCc_VPC1dhYlgvC/exec",
+  SITE_URL:"",
+  EVENT:"19th Episcopal District Planning Meeting",
+  APP:"Planning Meeting 2026",
+  HOST:"Ebenezer AME Church",
+  DATES:"3 to 5 December 2026",
+  THEME:"Reviving the Connection: Exceedingly, Abundantly Above All We Can Ask or Think",
+  REG_FEE:0,             // registration fee in rand; 0 = no fee
+  PARK_FEE:50,
+  BAYS:[
+    {id:"P",name:"Bay 1 · Pastors",short:"Pastors' bay",cap:0,clergy:true},
+    {id:"A",name:"Bay 2 · General",short:"General bay",cap:80},
+    {id:"B",name:"Bay 3 · General",short:"Second general bay",cap:30}
+  ],
+  BANK:{bank:"Standard Bank",accountName:"Ebenezer AME Church",accountNumber:"10290264284",branchCode:"051001"},
+  CONTACT:{name:"Aggy Mokone",phone:"072 192 9010"},
+  WORSHIP_URL:"",        // later: link or embed of the order of worship
+  DEMO_PINS:{admin:"1111",registration:"2222",ebenezer:"3333",marshal:"4444"}
+};
+const LIVE=!!CONFIG.API_URL;
+const ROLE_NAME={admin:"Organiser",registration:"Registration team",ebenezer:"Ebenezer host team",marshal:"Gate marshal"};
+const CAN={
+  regDesk:r=>r==="admin"||r==="registration",
+  parkDesk:r=>r==="admin"||r==="ebenezer",
+  gate:r=>r==="admin"||r==="ebenezer"||r==="marshal",
+  markPaid:r=>r==="admin"||r==="ebenezer"
+};
+
+/* ============ STORAGE ============ */
+const mem={};
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return k in mem?mem[k]:d}},set(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const sess={get(k){try{return sessionStorage.getItem(k)}catch(e){return mem["s_"+k]||null}},set(k,v){mem["s_"+k]=v;try{sessionStorage.setItem(k,v)}catch(e){}},del(k){delete mem["s_"+k];try{sessionStorage.removeItem(k)}catch(e){}}};
+const nowIso=()=>new Date().toISOString();
+const normPlate=s=>String(s||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+const digits=s=>String(s||"").replace(/\D/g,"");
+function mkCode(p){const a="ACDEFHJKMNPRTUVWXY3479";let s=p;for(let i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
+
+/* ============ DEMO DATA ============ */
+function seed(){
+  const regs=[
+    ["Molefe","Thabo","Vaal Conference","Clergy","Pastor","Lay Organization"],
+    ["Dlamini","Nomsa","M.M. Mokone Memorial Conference","Delegate","Steward","WMS"],
+    ["Seleka","Kagiso","M.M. Mokone Memorial Conference","Delegate","Class Leader","Sons of Allen"],
+    ["Mokoena","Lerato","Free State Conference","Clergy","Presiding Elder","None"],
+    ["Nkosi","Palesa","Vaal Conference","Observer","Member","ACE League"]
+  ].map((r,i)=>({code:"PMSMP"+(i+1),created:nowIso(),surname:r[0],names:r[1],email:"sample"+(i+1)+"@example.com",mobile:"07X XXX XXXX",church:"Sample church",district:"Sample district",conference:r[2],type:r[3],designation:r[4],auxiliary:r[5],consent:true,sample:true}));
+  const park=[
+    ["Rev.","Thabo Molefe","HJ 42 KL GP","White Toyota Corolla","P","paid","EFT","PMSMP1"],
+    ["Sis.","Nomsa Dlamini","CX 18 TR GP","Silver VW Polo","A","paid","EFT","PMSMP2"],
+    ["Bro.","Kagiso Seleka","FTG 812 NW","Grey Nissan NP200","A","pending","","PMSMP3"],
+    ["Rev.","Lerato Mokoena","DPK 334 FS","Blue Hyundai i20","P","in","EFT","PMSMP4"]
+  ].map((r,i)=>({code:"EBSMP"+(i+1),created:nowIso(),title:r[0],name:r[1],phone:"07X XXX XXXX",conference:"Sample",plate:r[2],car:r[3],bay:r[4],status:r[5],method:r[6],reg:r[7],paidAt:r[5]!=="pending"?nowIso():"",checkedAt:r[5]==="in"?nowIso():"",source:"Sample",sample:true}));
+  return {regs,park};
+}
+function db(){let d=store.get("pm26",null);if(!d){d=seed();store.set("pm26",d)}return d}
+function save(d){store.set("pm26",d)}
+function pinRole(pin){for(const[k,v]of Object.entries(CONFIG.DEMO_PINS))if(v===pin)return k;return null}
+function assignBay(parks,clergy){
+  const used=id=>parks.filter(x=>x.bay===id&&x.status!=="cancel").length;
+  if(clergy)return "P";
+  for(const b of CONFIG.BAYS){if(b.clergy)continue;if(used(b.id)<b.cap)return b.id}
+  return null;
+}
+
+async function api(action,p={}){
+  if(LIVE){
+    const r=await fetch(CONFIG.API_URL,{method:"POST",body:JSON.stringify({action,...p})});
+    const j=await r.json();if(!j.ok)throw new Error(j.error||"Something went wrong");return j.data;
+  }
+  const d=db();
+  const need=f=>{const r=pinRole(p.pin);if(!r||!f(r))throw new Error("You do not have access to this.");return r};
+  const findP=c=>d.park.find(x=>x.code===String(c||"").toUpperCase().trim());
+  const findR=c=>d.regs.find(x=>x.code===String(c||"").toUpperCase().trim());
+  switch(action){
+    case "register":{
+      const em=String(p.email||"").toLowerCase().trim();
+      const dup=d.regs.find(x=>x.email.toLowerCase()===em||digits(x.mobile).slice(-9)===digits(p.mobile).slice(-9));
+      if(dup)throw new Error("You are already registered. Use Find my ticket.");
+      let code;do{code=mkCode("PM")}while(findR(code));
+      const rec={code,created:nowIso(),surname:p.surname,names:p.names,email:em,mobile:p.mobile,church:p.church,district:p.district,conference:p.conference,type:p.type,designation:p.designation,auxiliary:p.auxiliary,consent:!!p.consent};
+      d.regs.push(rec);save(d);return rec}
+    case "getReg":{const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");return r}
+    case "findReg":{const r=d.regs.find(x=>digits(x.mobile).slice(-9)===digits(p.mobile).slice(-9)&&x.surname.toLowerCase()===String(p.surname||"").toLowerCase().trim());if(!r)throw new Error("No registration matches that surname and mobile number.");return r}
+    case "bayStats":{return CONFIG.BAYS.map(b=>({id:b.id,cap:b.cap,used:d.park.filter(x=>x.bay===b.id&&x.status!=="cancel").length}))}
+    case "book":{
+      const plate=normPlate(p.plate);
+      if(d.park.some(x=>normPlate(x.plate)===plate&&x.status!=="cancel"))throw new Error("This car registration is already booked. Use Find my pass.");
+      if(p.walkin)need(CAN.gate);
+      const bay=assignBay(d.park,!!p.clergy);if(!bay)throw new Error("All general bays are full.");
+      let code;do{code=mkCode("EB")}while(findP(code));
+      const rec={code,created:nowIso(),title:p.title,name:p.name,phone:p.phone,conference:p.conference,plate:String(p.plate).toUpperCase(),car:p.car,bay,reg:p.reg||"",status:p.walkin?"paid":"pending",method:p.walkin?p.method:"",paidAt:p.walkin?nowIso():"",checkedAt:"",source:p.walkin?"Gate":"Online"};
+      d.park.push(rec);save(d);return rec}
+    case "getPass":{const r=findP(p.code);if(!r)throw new Error("No pass found with that code.");return r}
+    case "findPass":{const r=d.park.find(x=>normPlate(x.plate)===normPlate(p.plate)&&digits(x.phone).slice(-4)===String(p.last4||""));if(!r)throw new Error("No booking matches that registration and phone number.");return r}
+    case "auth":{const r=pinRole(p.pin);if(!r)throw new Error("That PIN is not correct.");return{role:r}}
+    case "regList":need(CAN.regDesk);return d.regs
+    case "parkList":need(CAN.gate);return d.park
+    case "markPaid":{need(CAN.markPaid);const r=findP(p.code);r.status="paid";r.method=p.method||"EFT";r.paidAt=nowIso();save(d);return r}
+    case "unpay":{need(CAN.markPaid);const r=findP(p.code);r.status="pending";r.method="";r.paidAt="";save(d);return r}
+    case "checkin":{need(CAN.gate);const r=findP(p.code);if(!r)throw new Error("No pass found.");if(r.status==="pending")throw new Error("Payment not confirmed yet.");r.status="in";r.checkedAt=nowIso();save(d);return r}
+    case "reset":need(r=>r==="admin");store.set("pm26",seed());return true
+  }
+  throw new Error("Unknown action");
+}
+
+/* ============ HELPERS ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const R=n=>"R"+Number(n).toLocaleString("en-ZA");
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,2600)}
+const base=()=>CONFIG.SITE_URL||location.href.split("#")[0];
+const role=()=>sess.get("pm_role"),pin=()=>sess.get("pm_pin");
+const bayOf=id=>CONFIG.BAYS.find(b=>b.id===id)||{name:"Bay",short:"Bay"};
+async function copy(t,m){try{await navigator.clipboard.writeText(t);toast(m||"Copied")}catch(e){toast("Select the text and copy it")}}
+function chip(s){return{pending:'<span class="status st-pending">Awaiting payment</span>',paid:'<span class="status st-paid">Paid</span>',in:'<span class="status st-in">Parked</span>'}[s]||""}
+function dlCsv(name,rows){const csv=rows.map(r=>r.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"}));a.download=name;a.click()}
+function qr(el,text){try{new QRCode(el,{text,width:160,height:160,colorDark:"#151c2e",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent="QR unavailable"}}
+
+function shell(inner,active,wide){
+  const r=role();
+  const tabs=[["home","Home"],["register","Register"],["parking","Parking"],["worship","Worship"],["find","Find my ticket"]];
+  if(r){if(CAN.regDesk(r))tabs.push(["regdesk","Registrations"]);if(CAN.parkDesk(r))tabs.push(["parkdesk","Parking desk"]);if(CAN.gate(r))tabs.push(["gate","Gate"])}
+  else tabs.push(["team","Team login"]);
+  return `<div class="wrap ${wide?"wide":""}">
+  <header class="hero">
+    <span class="eyebrow">African Methodist Episcopal Church</span>
+    <h1>${esc(CONFIG.APP)}</h1>
+    <p style="opacity:.9">${esc(CONFIG.EVENT)}</p>
+    <div class="facts"><span class="fact">${esc(CONFIG.DATES)}</span><span class="fact">${esc(CONFIG.HOST)}</span></div>
+  </header>
+  <nav class="tabs">${tabs.map(([h,l])=>`<a href="#${h}" ${active===h?'aria-current="page"':""}>${l}</a>`).join("")}</nav>
+  ${r?`<p class="small muted">Signed in as <b>${ROLE_NAME[r]}</b>. <a href="#logout">Sign out</a></p>`:""}
+  ${LIVE?"":`<div class="note demo small"><b>Preview mode.</b> Entries are saved on this phone only. Team PINs for the preview: organiser ${CONFIG.DEMO_PINS.admin}, registration ${CONFIG.DEMO_PINS.registration}, Ebenezer ${CONFIG.DEMO_PINS.ebenezer}, marshal ${CONFIG.DEMO_PINS.marshal}.</div>`}
+  ${inner}</div>`;
+}
+function app(h){$("#app").innerHTML=h;document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copy(b.dataset.copy))}
+
+/* ============ HOME ============ */
+function viewHome(){
+  app(shell(`<section class="panel">
+    <h2>Welcome</h2>
+    <p>One app for the whole meeting. Register once, book your parking, and follow the worship from your phone.</p>
+    <p class="small muted"><em>${esc(CONFIG.THEME)}</em> · Ephesians 3:20 to 21</p>
+  </section>
+  <div class="cards">
+    <a class="room" href="#register"><span class="ic">📝</span><b>Register</b><span>Delegates, clergy and observers</span></a>
+    <a class="room" href="#parking"><span class="ic">🚗</span><b>Parking</b><span>Book a bay at Ebenezer for ${R(CONFIG.PARK_FEE)}</span></a>
+    <a class="room" href="#worship"><span class="ic">🎵</span><b>Worship</b><span>Order of worship for each session</span></a>
+    <a class="room" href="#find"><span class="ic">🎫</span><b>Find my ticket</b><span>Open your registration or parking pass</span></a>
+  </div>`,"home"));
+}
+
+/* ============ REGISTRATION ============ */
+function viewRegister(){
+  app(shell(`<section class="panel">
+    <h2>Register for the meeting</h2>
+    <form id="rf" novalidate>
+      <div class="grid2">
+        <label for="surname">Surname<input id="surname" autocomplete="family-name"></label>
+        <label for="names">Names<input id="names" autocomplete="given-name" placeholder="All your names"></label>
+      </div>
+      <div class="grid2">
+        <label for="email">Email<input id="email" type="email" inputmode="email" autocomplete="email"></label>
+        <label for="mobile">Mobile<input id="mobile" inputmode="tel" autocomplete="tel" placeholder="07X XXX XXXX"></label>
+      </div>
+      <label for="church">Church<input id="church" placeholder="e.g. Nkosi Memorial AME Church"></label>
+      <div class="grid2">
+        <label for="district">District<input id="district" placeholder="e.g. Capital District"></label>
+        <label for="conference">Conference<input id="conference" list="confs" placeholder="e.g. M.M. Mokone Memorial Conference"></label>
+      </div>
+      <datalist id="confs"><option>M.M. Mokone Memorial Conference</option></datalist>
+      <div class="grid2">
+        <label for="designation">Designation<input id="designation" list="desigs" placeholder="e.g. Pastor, Steward"></label>
+        <label for="auxiliary">Auxiliary<select id="auxiliary"><option value="">Choose</option><option>WMS</option><option>Lay Organization</option><option>Sons of Allen</option><option>ACE League</option><option>CMLF</option><option>RAYAC</option><option>YPD</option><option>Christian Education</option><option>None</option></select></label>
+      </div>
+      <datalist id="desigs"><option>Bishop</option><option>Presiding Elder</option><option>Pastor</option><option>Local Elder</option><option>Local Deacon</option><option>Licentiate</option><option>Steward</option><option>Trustee</option><option>Class Leader</option><option>Auxiliary President</option><option>Member</option></datalist>
+      <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Registration type</legend>
+        <div class="types"><label><input type="radio" name="type" value="Delegate"> Delegate</label><label><input type="radio" name="type" value="Clergy"> Clergy</label><label><input type="radio" name="type" value="Observer"> Observer</label></div>
+      </fieldset>
+      <label class="check" for="consent"><input type="checkbox" id="consent"> <span>I agree that the 19th Episcopal District may keep my details and use my email and mobile to communicate with me about this meeting and the work of the District after the meeting.</span></label>
+      <p id="rerr" class="err" hidden></p>
+      <button type="submit" id="rsub" class="brass">Register${CONFIG.REG_FEE?` · ${R(CONFIG.REG_FEE)}`:""}</button>
+    </form>
+  </section>`,"register"));
+  $("#rf").onsubmit=async e=>{
+    e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#rerr");
+    const t=document.querySelector('input[name="type"]:checked');
+    const data={surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:v("designation"),auxiliary:v("auxiliary"),type:t?t.value:"",consent:$("#consent").checked};
+    const miss=["surname","names","email","mobile","church","district","conference","designation","auxiliary"].filter(k=>!data[k]);
+    const fail=m=>{er.textContent=m;er.hidden=false};
+    if(miss.length){fail("Please fill in every field.");$("#"+miss[0]).focus();return}
+    if(!/^\S+@\S+\.\S+$/.test(data.email))return fail("Please check the email address.");
+    if(digits(data.mobile).length<9)return fail("Please check the mobile number.");
+    if(!data.type)return fail("Please choose a registration type.");
+    if(!data.consent)return fail("Please tick the box to agree to how your details are used.");
+    er.hidden=true;$("#rsub").disabled=true;$("#rsub").textContent="Registering...";
+    try{const r=await api("register",data);location.hash="ticket-"+r.code;toast("You are registered")}
+    catch(x){fail(x.message);$("#rsub").disabled=false;$("#rsub").textContent="Register"}
+  };
+}
+
+async function viewTicket(code){
+  let r;try{r=await api("getReg",{code})}catch(e){app(shell(`<section class="panel"><h2>Not found</h2><p class="muted">${esc(e.message)}</p><a class="btn" href="#find">Find my ticket</a></section>`,""));return}
+  const title=r.type==="Clergy"?"Rev.":"";
+  app(shell(`<article class="ticket">
+    <div class="ticket-head"><div><span class="eyebrow">Registration</span><h2>${esc(CONFIG.EVENT)}</h2><p class="small" style="opacity:.8">${esc(CONFIG.DATES)} · ${esc(CONFIG.HOST)}</p></div><span class="status st-reg">${esc(r.type)}</span></div>
+    <div class="ticket-body">
+      <div class="who"><strong>${esc(r.names)} ${esc(r.surname)}</strong><span class="muted small">${esc(r.designation)} · ${esc(r.church)}</span><br><span class="muted small">${esc(r.conference)} · ${esc(r.auxiliary)}</span></div>
+      <div class="qr" id="qr"></div>
+      <div class="code">${esc(r.code)}</div>
+      <p class="small muted">Show this at the registration desk. Save the link so you can open it again.</p>
+      <div class="row" style="justify-content:center"><button class="ghost" data-copy="${esc(base()+"#ticket-"+r.code)}">Copy ticket link</button></div>
+    </div>
+    <div class="perf"></div>
+    <div class="ticket-body">
+      <h3>Coming by car?</h3>
+      <p class="small muted">Book your parking bay at Ebenezer now and drive straight in. ${R(CONFIG.PARK_FEE)} once off for all three days.</p>
+      <a class="btn brass" href="#parking-${esc(r.code)}">Book parking</a>
+      <p class="blessing">We look forward to welcoming you. God go with you.</p>
+    </div>
+  </article>`,""));
+  qr($("#qr"),base()+"#ticket-"+r.code);
+}
+
+/* ============ PARKING ============ */
+async function bayPanel(){
+  let st=[];try{st=await api("bayStats")}catch(e){}
+  return `<section class="panel"><h3>Parking at Ebenezer</h3><div class="bays">${CONFIG.BAYS.map(b=>{const s=st.find(x=>x.id===b.id)||{used:0};
+    if(b.clergy)return `<div class="bayc"><span>${esc(b.name)}</span><b>Reserved</b><span>For pastors and clergy</span></div>`;
+    const left=Math.max(0,b.cap-s.used);return `<div class="bayc"><span>${esc(b.name)}</span><b>${left} <span class="small muted">of ${b.cap} open</span></b><div class="meter"><i style="width:${Math.round(s.used/b.cap*100)}%"></i></div></div>`}).join("")}</div>
+    <p class="small muted">Car guards and marshals will be at the gate in reflector vests bearing the AME Church logo.</p></section>`;
+}
+async function viewParking(regCode){
+  let pre={};if(regCode){try{pre=await api("getReg",{code:regCode})}catch(e){}}
+  const panel=await bayPanel();
+  const clergy=pre.type==="Clergy";
+  app(shell(`${panel}<section class="panel">
+    <h2>Book your bay</h2>
+    <p class="small muted">Once off ${R(CONFIG.PARK_FEE)} for all three days, paid by EFT to Ebenezer AME Church.</p>
+    <form id="pf" novalidate>
+      <div class="grid2">
+        <label for="ptitle">Title<select id="ptitle"><option>Rev.</option><option>Sis.</option><option>Bro.</option><option>Dr.</option><option>Mother</option><option>Bishop</option></select></label>
+        <label for="pname">Full name<input id="pname" value="${esc(pre.names?pre.names+" "+pre.surname:"")}"></label>
+      </div>
+      <div class="grid2">
+        <label for="pphone">WhatsApp number<input id="pphone" inputmode="tel" value="${esc(pre.mobile||"")}"></label>
+        <label for="pconf">Conference<input id="pconf" value="${esc(pre.conference||"")}"></label>
+      </div>
+      <div class="grid2">
+        <label for="pplate">Car registration<input id="pplate" class="plate-in" placeholder="FTG 812 NW" autocomplete="off"></label>
+        <label for="pcar">Car colour and make<input id="pcar" placeholder="Grey Nissan NP200"></label>
+      </div>
+      <label class="check" for="pclergy"><input type="checkbox" id="pclergy" ${clergy?"checked":""}> <span>I am a pastor or member of the clergy <span class="hint">(Pastors' bay)</span></span></label>
+      <p id="perr" class="err" hidden></p>
+      <button type="submit" id="psub" class="brass">Book my bay for ${R(CONFIG.PARK_FEE)}</button>
+    </form>
+  </section>`,"parking"));
+  if(pre.type==="Clergy")$("#ptitle").value="Rev.";
+  $("#pf").onsubmit=async e=>{e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#perr");
+    const data={title:v("ptitle"),name:v("pname"),phone:v("pphone"),conference:v("pconf"),plate:v("pplate"),car:v("pcar"),clergy:$("#pclergy").checked,reg:pre.code||""};
+    const miss=["pname","pphone","pconf","pplate","pcar"].filter(k=>!v(k));
+    if(miss.length){er.textContent="Please fill in every field.";er.hidden=false;$("#"+miss[0]).focus();return}
+    if(digits(data.phone).length<9){er.textContent="Please check the WhatsApp number.";er.hidden=false;return}
+    $("#psub").disabled=true;$("#psub").textContent="Booking...";
+    try{const r=await api("book",data);location.hash="pass-"+r.code;toast("Booked. Your pass is ready.")}
+    catch(x){er.textContent=x.message;er.hidden=false;$("#psub").disabled=false;$("#psub").textContent=`Book my bay for ${R(CONFIG.PARK_FEE)}`}};
+}
+function bankBlock(code){const B=CONFIG.BANK;return `<div style="width:100%;display:flex;flex-direction:column;gap:10px">
+  <h3 style="text-align:left">Pay ${R(CONFIG.PARK_FEE)} by EFT</h3>
+  <dl class="pay"><dt>Bank</dt><dd>${esc(B.bank)}</dd><dt>Account name</dt><dd>${esc(B.accountName)}</dd><dt>Account no.</dt><dd class="mono">${esc(B.accountNumber)}</dd><dt>Branch code</dt><dd class="mono">${esc(B.branchCode)}</dd><dt>Reference</dt><dd class="mono">${esc(code)}</dd></dl>
+  <div class="row"><button class="ghost" data-copy="${esc(B.accountNumber)}">Copy account no.</button><button class="ghost" data-copy="${esc(code)}">Copy reference</button></div>
+  <p class="small muted" style="text-align:left">Use <b>${esc(code)}</b> as your reference. Send proof of payment on WhatsApp to <b>${esc(CONFIG.CONTACT.name)}, ${esc(CONFIG.CONTACT.phone)}</b>. Your pass turns green once payment is confirmed.</p></div>`}
+async function viewPass(code){
+  let r;try{r=await api("getPass",{code})}catch(e){app(shell(`<section class="panel"><h2>Pass not found</h2><p class="muted">${esc(e.message)}</p><a class="btn" href="#find">Find my ticket</a></section>`,""));return}
+  const rl=role();let gate="";
+  if(rl&&CAN.gate(rl)){
+    if(r.status==="paid")gate=`<div class="verdict v-ok">Paid. Let this car in.</div><button class="okb" id="ci" style="width:100%">Check in ${esc(r.plate)}</button>`;
+    else if(r.status==="in")gate=`<div class="verdict v-in">Already checked in</div><p class="small muted">The pass is valid for all three days, so re entry is fine.</p>`;
+    else gate=`<div class="verdict v-warn">Not paid yet</div>${CAN.markPaid(rl)?`<div class="row" style="justify-content:center"><button class="okb" data-pay="Cash">Paid cash</button><button class="ghost" data-pay="Card">Paid card</button><button class="ghost" data-pay="EFT">EFT received</button></div>`:`<p class="small muted">Take ${R(CONFIG.PARK_FEE)} and ask the host team to mark it paid.</p>`}`;
+  }
+  app(shell(`<article class="ticket">
+    <div class="ticket-head"><div><span class="eyebrow">Parking pass</span><h2>${esc(CONFIG.HOST)}</h2><p class="small" style="opacity:.8">${esc(CONFIG.DATES)}</p></div>${chip(r.status)}</div>
+    <div class="ticket-body">${gate}
+      <span class="plate">${esc(r.plate)}<small>ZA</small></span>
+      <span class="bay">${esc(bayOf(r.bay).name)}</span>
+      <div class="who"><strong>${esc(r.title)} ${esc(r.name)}</strong><span class="muted small">${esc(r.car)} · ${esc(r.conference)}</span></div>
+      <div class="qr" id="qr"></div><div class="code">${esc(r.code)}</div>
+      ${!rl&&r.status==="pending"?`<div class="perf" style="width:100%"></div>`+bankBlock(r.code):""}
+      ${!rl&&r.status!=="pending"?`<p class="small muted">Show this QR code to the marshal at the gate.</p>`:""}
+    </div><div class="perf"></div>
+    <div class="ticket-body"><p class="blessing">Travel safely. God go with you on the road.</p>
+      <div class="row" style="justify-content:center"><button class="ghost" data-copy="${esc(base()+"#pass-"+r.code)}">Copy pass link</button><button class="ghost" id="rf2">Refresh status</button></div></div>
+  </article>`,""));
+  qr($("#qr"),base()+"#pass-"+r.code);
+  $("#rf2").onclick=()=>viewPass(code);
+  const ci=$("#ci");if(ci)ci.onclick=async()=>{ci.disabled=true;try{await api("checkin",{pin:pin(),code});toast("Checked in");viewPass(code)}catch(e){toast(e.message);ci.disabled=false}};
+  document.querySelectorAll("[data-pay]").forEach(b=>b.onclick=async()=>{try{await api("markPaid",{pin:pin(),code,method:b.dataset.pay});toast("Marked paid");viewPass(code)}catch(e){toast(e.message)}});
+}
+
+/* ============ WORSHIP ============ */
+function viewWorship(){
+  app(shell(`<section class="panel"><h2>Worship</h2>
+    ${CONFIG.WORSHIP_URL?`<a class="btn" href="${esc(CONFIG.WORSHIP_URL)}">Open the order of worship</a>`:`<p>The order of worship for each session will appear here closer to the meeting, with the hymns, readings and responses on your phone.</p><p class="small muted">Check back in the week of the meeting.</p>`}
+  </section>`,"worship"));
+}
+
+/* ============ FIND ============ */
+function viewFind(){
+  app(shell(`<section class="panel"><h2>Find my registration</h2>
+    <form id="f1" novalidate><div class="grid2"><label for="fs">Surname<input id="fs"></label><label for="fm">Mobile<input id="fm" inputmode="tel"></label></div><p id="e1" class="err" hidden></p><button type="submit">Show my ticket</button></form></section>
+  <section class="panel"><h2>Find my parking pass</h2>
+    <form id="f2" novalidate><div class="grid2"><label for="fp">Car registration<input id="fp" class="plate-in" autocomplete="off"></label><label for="fl">Last four digits of your number<input id="fl" inputmode="numeric" maxlength="4"></label></div><p id="e2" class="err" hidden></p><button type="submit">Show my pass</button></form></section>`,"find"));
+  $("#f1").onsubmit=async e=>{e.preventDefault();try{const r=await api("findReg",{surname:$("#fs").value,mobile:$("#fm").value});location.hash="ticket-"+r.code}catch(x){$("#e1").textContent=x.message;$("#e1").hidden=false}};
+  $("#f2").onsubmit=async e=>{e.preventDefault();try{const r=await api("findPass",{plate:$("#fp").value,last4:$("#fl").value.trim()});location.hash="pass-"+r.code}catch(x){$("#e2").textContent=x.message;$("#e2").hidden=false}};
+}
+
+/* ============ TEAM ============ */
+function viewTeam(){
+  app(shell(`<section class="panel"><h2>Team login</h2><p class="small muted">For the registration team, the Ebenezer host team and gate marshals. Each team sees only its own room.</p>
+    <form id="lf" novalidate><label for="pin">Team PIN<input id="pin" type="password" inputmode="numeric" autocomplete="off"></label><p id="le" class="err" hidden></p><button type="submit">Sign in</button></form></section>`,"team"));
+  $("#lf").onsubmit=async e=>{e.preventDefault();const p=$("#pin").value.trim();try{const r=await api("auth",{pin:p});sess.set("pm_pin",p);sess.set("pm_role",r.role);toast("Signed in as "+ROLE_NAME[r.role]);location.hash=CAN.regDesk(r.role)&&r.role!=="admin"?"regdesk":CAN.parkDesk(r.role)?"parkdesk":"gate"}catch(x){$("#le").textContent=x.message;$("#le").hidden=false}};
+}
+function bars(obj){const l=Object.entries(obj).sort((a,b)=>b[1]-a[1]);const m=l.length?l[0][1]:1;return l.map(([k,n])=>`<div class="bar"><span>${esc(k)}</span><div class="track"><i style="width:${Math.round(n/m*100)}%"></i></div><span>${n}</span></div>`).join("")||'<p class="muted small">None yet.</p>'}
+const count=(arr,f)=>arr.reduce((o,x)=>{const k=x[f]||"Not given";o[k]=(o[k]||0)+1;return o},{});
+let rq="",rt="all";
+async function viewRegDesk(){
+  if(!CAN.regDesk(role())){location.hash=role()?"home":"team";return}
+  let all;try{all=await api("regList",{pin:pin()})}catch(e){toast(e.message);return}
+  let rows=all.slice();if(rt!=="all")rows=rows.filter(x=>x.type===rt);
+  if(rq){const q=rq.toLowerCase();rows=rows.filter(x=>(x.surname+x.names+x.church+x.conference+x.code+x.email).toLowerCase().includes(q))}
+  rows.sort((a,b)=>b.created.localeCompare(a.created));
+  const t=count(all,"type");
+  app(shell(`<section class="kpis"><div class="kpi"><span>Registered</span><b>${all.length}</b></div><div class="kpi"><span>Delegates</span><b>${t.Delegate||0}</b></div><div class="kpi"><span>Clergy</span><b>${t.Clergy||0}</b></div><div class="kpi"><span>Observers</span><b>${t.Observer||0}</b></div></section>
+  ${all.some(x=>x.sample)?`<p class="note demo small">Rows marked <span class="tag">Sample</span> show how the desk works.</p>`:""}
+  <section class="panel"><div class="row" style="justify-content:space-between"><h2>Registrations</h2><div class="row"><button class="ghost" id="csv">Download for Excel</button><button class="ghost" id="rl">Refresh</button></div></div>
+    <div class="row"><select id="ft" style="width:auto"><option value="all">All types</option><option>Delegate</option><option>Clergy</option><option>Observer</option></select><input id="q" placeholder="Search name, church, conference" style="flex:1;min-width:160px" value="${esc(rq)}"></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Contact</th><th>Church and district</th><th>Conference</th><th>Designation</th><th>Auxiliary</th><th>Type</th></tr></thead><tbody>
+    ${rows.map(x=>`<tr><td class="mono"><a href="#ticket-${esc(x.code)}" style="color:inherit">${esc(x.code)}</a></td><td>${esc(x.surname)}, ${esc(x.names)}${x.sample?' <span class="tag">Sample</span>':""}</td><td>${esc(x.mobile)}<br><span class="muted small">${esc(x.email)}</span></td><td>${esc(x.church)}<br><span class="muted small">${esc(x.district)}</span></td><td>${esc(x.conference)}</td><td>${esc(x.designation)}</td><td>${esc(x.auxiliary)}</td><td>${esc(x.type)}</td></tr>`).join("")||'<tr><td colspan="8" class="muted">No registrations match.</td></tr>'}
+    </tbody></table></div></section>
+  <div class="grid2"><section class="panel"><h3>By conference</h3><div class="bars">${bars(count(all,"conference"))}</div></section><section class="panel"><h3>By auxiliary</h3><div class="bars">${bars(count(all,"auxiliary"))}</div></section></div>
+  ${!LIVE&&role()==="admin"?'<div class="row"><button class="ghost" id="rs">Reset preview data</button></div>':""}`,"regdesk",true));
+  $("#ft").value=rt;$("#ft").onchange=e=>{rt=e.target.value;viewRegDesk()};$("#q").onchange=e=>{rq=e.target.value;viewRegDesk()};$("#rl").onclick=viewRegDesk;
+  $("#csv").onclick=()=>dlCsv("Planning_Meeting_2026_Registrations.csv",[["Code","Surname","Names","Email","Mobile","Church","District","Conference","Designation","Auxiliary","Registration type","Consent","Registered at"]].concat(all.map(x=>[x.code,x.surname,x.names,x.email,x.mobile,x.church,x.district,x.conference,x.designation,x.auxiliary,x.type,x.consent?"Yes":"No",x.created])));
+  const rs=$("#rs");if(rs)rs.onclick=async()=>{await api("reset",{pin:pin()});toast("Preview data reset");viewRegDesk()};
+}
+let pf="all",pq="";
+async function viewParkDesk(){
+  if(!CAN.parkDesk(role())){location.hash=role()?"home":"team";return}
+  let all;try{all=await api("parkList",{pin:pin()})}catch(e){toast(e.message);return}
+  const paid=all.filter(x=>x.status!=="pending"),pend=all.filter(x=>x.status==="pending"),inn=all.filter(x=>x.status==="in");
+  let rows=all.slice();if(pf!=="all")rows=rows.filter(x=>x.status===pf);
+  if(pq){const q=pq.toLowerCase();rows=rows.filter(x=>(x.name+x.plate+x.code+x.conference).toLowerCase().includes(q))}
+  rows.sort((a,b)=>(a.status==="pending"?0:1)-(b.status==="pending"?0:1)||b.created.localeCompare(a.created));
+  const byM=m=>paid.filter(x=>(x.method||"EFT")===m).length*CONFIG.PARK_FEE;
+  const byBay={};CONFIG.BAYS.forEach(b=>byBay[b.name]=all.filter(x=>x.bay===b.id).length);
+  app(shell(`<section class="kpis"><div class="kpi"><span>Collected</span><b>${R(paid.length*CONFIG.PARK_FEE)}</b></div><div class="kpi"><span>Still owed</span><b>${R(pend.length*CONFIG.PARK_FEE)}</b></div><div class="kpi"><span>Cars booked</span><b>${all.length}</b></div><div class="kpi"><span>Parked now</span><b>${inn.length}</b></div></section>
+  ${all.some(x=>x.sample)?`<p class="note demo small">Rows marked <span class="tag">Sample</span> show how the desk works.</p>`:""}
+  <section class="panel"><div class="row" style="justify-content:space-between"><h2>Parking bookings</h2><div class="row"><button class="ghost" id="csv">Download for Excel</button><button class="ghost" id="rl">Refresh</button></div></div>
+    <div class="row"><select id="flt" style="width:auto"><option value="all">All</option><option value="pending">Awaiting payment</option><option value="paid">Paid, not arrived</option><option value="in">Parked</option></select><input id="q" placeholder="Search name, plate, code" style="flex:1;min-width:160px" value="${esc(pq)}"></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Registration</th><th>Bay</th><th>Status</th><th>Action</th></tr></thead><tbody>
+    ${rows.map(x=>`<tr><td class="mono"><a href="#pass-${esc(x.code)}" style="color:inherit">${esc(x.code)}</a></td><td>${esc(x.title)} ${esc(x.name)}${x.sample?' <span class="tag">Sample</span>':""}<br><span class="muted small">${esc(x.phone)}</span></td><td class="mono">${esc(x.plate)}<br><span class="muted small" style="font-family:var(--f-body)">${esc(x.car)}</span></td><td>${esc(bayOf(x.bay).short)}</td><td>${chip(x.status)}${x.method?`<br><span class="muted small">${esc(x.method)}</span>`:""}</td><td>${x.status==="pending"?`<button class="okb" data-paid="${esc(x.code)}">EFT received</button>`:x.status==="paid"?`<button class="ghost" data-undo="${esc(x.code)}">Undo paid</button>`:""}</td></tr>`).join("")||'<tr><td colspan="6" class="muted">No bookings match.</td></tr>'}
+    </tbody></table></div></section>
+  <div class="grid2"><section class="panel"><h3>Money by method</h3><div class="bars">${["EFT","Cash","Card"].map(m=>`<div class="bar"><span>${m}</span><div class="track"><i style="width:${paid.length?Math.round(byM(m)/(paid.length*CONFIG.PARK_FEE)*100):0}%"></i></div><span>${R(byM(m))}</span></div>`).join("")}</div></section><section class="panel"><h3>Cars by bay</h3><div class="bars">${bars(byBay)}</div></section></div>`,"parkdesk",true));
+  $("#flt").value=pf;$("#flt").onchange=e=>{pf=e.target.value;viewParkDesk()};$("#q").onchange=e=>{pq=e.target.value;viewParkDesk()};$("#rl").onclick=viewParkDesk;
+  document.querySelectorAll("[data-paid]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api("markPaid",{pin:pin(),code:b.dataset.paid,method:"EFT"});toast("Marked paid. The pass is now green.");viewParkDesk()}catch(e){toast(e.message)}});
+  document.querySelectorAll("[data-undo]").forEach(b=>b.onclick=async()=>{try{await api("unpay",{pin:pin(),code:b.dataset.undo});viewParkDesk()}catch(e){toast(e.message)}});
+  $("#csv").onclick=()=>dlCsv("Planning_Meeting_2026_Parking.csv",[["Code","Title","Name","Phone","Conference","Registration","Car","Bay","Status","Method","Paid at","Checked in at","Source"]].concat(all.map(x=>[x.code,x.title,x.name,x.phone,x.conference,x.plate,x.car,bayOf(x.bay).name,x.status,x.method,x.paidAt,x.checkedAt,x.source])));
+}
+async function viewGate(){
+  if(!CAN.gate(role())){location.hash=role()?"home":"team";return}
+  app(shell(`<section class="panel"><h2>Gate check</h2><p class="small muted">Scan the driver's QR code with this phone's camera and the pass opens with a check in button. No QR? Type the registration.</p>
+    <form id="gf" novalidate><label for="gq">Registration or pass code<input id="gq" class="plate-in" autocomplete="off"></label><button type="submit">Look up</button></form><div id="gres"></div></section>
+  <section class="panel"><h2>Walk in at the gate</h2><p class="small muted">Driver did not book? Take ${R(CONFIG.PARK_FEE)} and issue a pass here.</p>
+    <form id="wf" novalidate><div class="grid2"><label for="wn">Title and full name<input id="wn"></label><label for="wp">WhatsApp number<input id="wp" inputmode="tel"></label></div>
+      <div class="grid2"><label for="wr">Registration<input id="wr" class="plate-in" autocomplete="off"></label><label for="wm">Paid by<select id="wm"><option>Cash</option><option>Card</option><option>EFT</option></select></label></div>
+      <label class="check" for="wc"><input type="checkbox" id="wc"> <span>Pastor or clergy (Pastors' bay)</span></label>
+      <p id="we" class="err" hidden></p><button type="submit" class="okb">Issue pass and check in</button></form></section>`,"gate"));
+  $("#gf").onsubmit=async e=>{e.preventDefault();const q=$("#gq").value.trim();if(!q)return;try{const all=await api("parkList",{pin:pin()});const m=all.filter(x=>x.code===q.toUpperCase()||normPlate(x.plate)===normPlate(q));
+    $("#gres").innerHTML=m.length?m.map(x=>`<a href="#pass-${esc(x.code)}" class="btn ghost" style="width:100%;margin-top:10px;text-align:left">${esc(x.plate)} · ${esc(x.title)} ${esc(x.name)} · ${esc(bayOf(x.bay).short)} ${chip(x.status)}</a>`).join(""):`<p class="err" style="margin-top:10px">No booking for ${esc(q)}. Use Walk in below.</p>`}catch(x){toast(x.message)}};
+  $("#wf").onsubmit=async e=>{e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#we");if(!v("wn")||!v("wr")){er.textContent="Name and registration are needed.";er.hidden=false;return}
+    try{const parts=v("wn").split(" ");const t=["Rev.","Sis.","Bro.","Dr.","Mother","Bishop"].includes(parts[0])?parts.shift():"";
+      const r=await api("book",{pin:pin(),walkin:true,method:v("wm"),title:t,name:parts.join(" "),phone:v("wp"),conference:"Walk in",plate:v("wr"),car:"",clergy:$("#wc").checked});
+      await api("checkin",{pin:pin(),code:r.code});toast("Pass issued and checked in");location.hash="pass-"+r.code}catch(x){er.textContent=x.message;er.hidden=false}};
+}
+
+/* ============ ROUTER ============ */
+function route(){
+  const h=(location.hash||"").slice(1);
+  if(h==="logout"){sess.del("pm_pin");sess.del("pm_role");toast("Signed out");location.hash="home";return}
+  if(h.startsWith("ticket-"))return viewTicket(h.slice(7));
+  if(h.startsWith("pass-"))return viewPass(h.slice(5));
+  if(h.startsWith("parking-"))return viewParking(h.slice(8));
+  const m={register:viewRegister,parking:()=>viewParking(),worship:viewWorship,find:viewFind,team:viewTeam,regdesk:viewRegDesk,parkdesk:viewParkDesk,gate:viewGate};
+  return (m[h]||viewHome)();
+}
+window.addEventListener("hashchange",()=>{route();window.scrollTo(0,0)});
+route();
+</script>
+</body>
+</html>
