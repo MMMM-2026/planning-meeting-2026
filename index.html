@@ -489,8 +489,11 @@ async function viewGate(){
       <div class="grid2"><label for="wr">Registration<input id="wr" class="plate-in" autocomplete="off"></label><label for="wm">Paid by<select id="wm"><option>Cash</option><option>Card</option><option>EFT</option></select></label></div>
       <label class="check" for="wc"><input type="checkbox" id="wc"> <span>Pastor or clergy (Pastors' bay)</span></label>
       <p id="we" class="err" hidden></p><button type="submit" class="okb">Issue pass and check in</button></form></section>`,"gate"));
-  $("#gf").onsubmit=async e=>{e.preventDefault();const q=$("#gq").value.trim();if(!q)return;try{const all=await api("parkList",{pin:pin()});const m=all.filter(x=>x.code===q.toUpperCase()||normPlate(x.plate)===normPlate(q));
-    $("#gres").innerHTML=m.length?m.map(x=>`<a href="#pass-${esc(x.code)}" class="btn ghost" style="width:100%;margin-top:10px;text-align:left">${esc(x.plate)} · ${esc(x.title)} ${esc(x.name)} · ${esc(bayOf(x.bay).short)} ${chip(x.status)}</a>`).join(""):`<p class="err" style="margin-top:10px">No booking for ${esc(q)}. Use Walk in below.</p>`}catch(x){toast(x.message)}};
+  $("#gf").onsubmit=async e=>{e.preventDefault();const q=$("#gq").value.trim();if(!q)return;try{const all=await api("parkList",{pin:pin()});const nq=normPlate(q),srt=s=>s.split("").sort().join(""),num=s=>(s.match(/\d+/g)||[]).join("");
+    let m=all.filter(x=>x.code===q.toUpperCase()||normPlate(x.plate)===nq),close=false;
+    if(!m.length&&nq.length>=4){close=true;m=all.filter(x=>{const p=normPlate(x.plate);return srt(p)===srt(nq)||p.includes(nq)||nq.includes(p)||(num(nq).length>=2&&num(p)===num(nq))})}
+    const link=x=>`<a href="#pass-${esc(x.code)}" class="btn ghost" style="width:100%;margin-top:10px;text-align:left">${esc(x.plate)} · ${esc(x.title)} ${esc(x.name)} · ${esc(bayOf(x.bay).short)} ${chip(x.status)}</a>`;
+    $("#gres").innerHTML=m.length?(close?`<p class="small muted" style="margin-top:10px">No exact match for ${esc(q.toUpperCase())}. Did you mean one of these? Check the plate on the car.</p>`:"")+m.map(link).join(""):`<p class="err" style="margin-top:10px">No booking for ${esc(q.toUpperCase())}. Use Walk in below.</p>`}catch(x){toast(x.message)}};
   $("#wf").onsubmit=async e=>{e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#we");if(!v("wn")||!v("wr")){er.textContent="Name and registration are needed.";er.hidden=false;return}
     try{const parts=v("wn").split(" ");const t=["Rev.","Sis.","Bro.","Dr.","Mother","Bishop"].includes(parts[0])?parts.shift():"";
       const r=await api("book",{pin:pin(),walkin:true,method:v("wm"),title:t,name:parts.join(" "),phone:v("wp"),conference:"Walk in",plate:v("wr"),car:"",clergy:$("#wc").checked});
