@@ -119,6 +119,9 @@ td button{padding:6px 10px;font-size:12px;border-radius:7px}
 .bar .track{height:8px;background:var(--line);border-radius:5px;overflow:hidden}.bar .track i{display:block;height:100%;background:var(--navy)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:20}
 .blessing{font-family:var(--f-display);font-style:italic;color:var(--muted);font-size:16px}
+.doc{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line)}.doc:first-of-type{border-top:0}.doc>div:first-child{display:flex;flex-direction:column;gap:2px}.doc .row button,.doc .row .btn{padding:7px 12px;font-size:14px;width:auto;margin:0}
+#docov{position:fixed;inset:0;z-index:50;background:#0d1322;display:flex;flex-direction:column}#docov .dov-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;color:#fff;background:#151c2e}#docov .dov-bar>div:first-child{display:flex;flex-direction:column;min-width:0}#docov .dov-bar b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#docov .dov-bar .btn,#docov .dov-bar button{padding:7px 12px;font-size:14px;width:auto;margin:0;color:#fff !important;border-color:rgba(255,255,255,.4);background:transparent}#docov iframe{flex:1;border:0;width:100%;background:#fff}
+#nowbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:40;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 16px;border-radius:14px;border:0;background:#151c2e;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.35);width:auto;margin:0}#nowbar span:first-child{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
 </style>
 </head>
 <body>
@@ -158,7 +161,8 @@ const CAN={
   regDesk:r=>r==="admin"||r==="registration",
   parkDesk:r=>r==="admin"||r==="ebenezer",
   gate:r=>r==="admin"||r==="ebenezer"||r==="marshal",
-  markPaid:r=>r==="admin"||r==="ebenezer"
+  markPaid:r=>r==="admin"||r==="ebenezer",
+  docs:r=>r==="admin"||r==="registration"
 };
 
 /* ============ STORAGE ============ */
@@ -236,6 +240,10 @@ async function api(action,p={}){
     case "markPaid":{need(CAN.markPaid);const r=findP(p.code);r.status="paid";r.method=p.method||"EFT";r.paidAt=nowIso();save(d);return r}
     case "unpay":{need(CAN.markPaid);const r=findP(p.code);r.status="pending";r.method="";r.paidAt="";save(d);return r}
     case "checkin":{need(CAN.gate);const r=findP(p.code);if(!r)throw new Error("No pass found.");if(r.status==="pending")throw new Error("Payment not confirmed yet.");r.status="in";r.checkedAt=nowIso();save(d);return r}
+    case "docList":return{docs:d.docs||[],now:store.get("pm26_now",null)}
+    case "docUpload":{need(CAN.docs);d.docs=d.docs||[];const rec={id:mkCode(p.kind==="presentation"?"PR":"RP"),created:nowIso(),kind:p.kind,title:p.title,by:p.by||"",session:p.session||"",fileId:"",mime:p.mime,size:p.size||0,name:p.name,url:"data:"+p.mime+";base64,"+p.data};d.docs.push(rec);save(d);return rec}
+    case "docDel":{need(CAN.docs);d.docs=(d.docs||[]).filter(x=>x.id!==p.id);save(d);const n=store.get("pm26_now",null);if(n&&n.id===p.id)store.set("pm26_now",null);return true}
+    case "docShow":{need(CAN.docs);const x=(d.docs||[]).find(x=>x.id===p.id);const n=x?{id:x.id,kind:x.kind,title:x.title,by:x.by,fileId:x.fileId,url:x.url,mime:x.mime,at:nowIso()}:null;store.set("pm26_now",n);return{now:n}}
     case "reset":need(r=>r==="admin");store.set("pm26",seed());return true
   }
   throw new Error("Unknown action");
@@ -256,7 +264,7 @@ function qr(el,text){try{new QRCode(el,{text,width:160,height:160,colorDark:"#15
 
 function shell(inner,active,wide){
   const r=role();
-  const tabs=[["home","Home"],["register","Register"],["parking","Parking"],["worship","Worship"],["find","Find my ticket"]];
+  const tabs=[["home","Home"],["register","Register"],["parking","Parking"],["worship","Worship"],["reports","Reports"],["presentations","Presentations"],["find","Find my ticket"]];
   if(r){if(CAN.regDesk(r))tabs.push(["regdesk","Registrations"]);if(CAN.parkDesk(r))tabs.push(["parkdesk","Parking desk"]);if(CAN.gate(r))tabs.push(["gate","Gate"])}
   else tabs.push(["team","Team login"]);
   return `<div class="wrap ${wide?"wide":""}">
@@ -288,6 +296,8 @@ function viewHome(){
     <a class="room" href="#register"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span><b>Register</b><span>Delegates, clergy and observers</span></a>
     <a class="room" href="#parking"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14v-5l-2-5H7l-2 5z"/><circle cx="8" cy="17" r="2"/><circle cx="16" cy="17" r="2"/><path d="M5 12h14"/></svg></span><b>Parking</b><span>Book a bay at Ebenezer for ${R(CONFIG.PARK_FEE)}</span></a>
     <a class="room" href="#worship"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><b>Worship</b><span>Order of worship for each session</span></a>
+    <a class="room" href="#reports"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg></span><b>Reports</b><span>Read the reports for each session</span></a>
+    <a class="room" href="#presentations"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg></span><b>Presentations</b><span>Slides shown at the meeting</span></a>
     <a class="room" href="#find"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a3 3 0 0 0 0 6v3h18v-3a3 3 0 0 0 0-6V6H3z"/><path d="M13 6v12" stroke-dasharray="2 2"/></svg></span><b>Find my ticket</b><span>Open your registration or parking pass</span></a>
   </div>`,"home"));
 }
@@ -727,6 +737,63 @@ async function viewGate(){
       await api("checkin",{pin:pin(),code:r.code});toast("Pass issued and checked in");location.hash="pass-"+r.code}catch(x){er.textContent=x.message;er.hidden=false}};
 }
 
+/* ============ REPORTS AND PRESENTATIONS (10 Nov 2026) ============
+   Rev. Moobi's team and the organiser upload; everyone with the link reads. When a report or presentation is called,
+   the team presses "Show to everyone now" and it opens by itself on every phone that has the app open. */
+const KIND={report:{one:"report",many:"Reports",hash:"reports"},presentation:{one:"presentation",many:"Presentations",hash:"presentations"}};
+const docUrl=x=>x.url||("https://drive.google.com/file/d/"+x.fileId+"/preview");
+const docOpen=x=>x.url||("https://drive.google.com/file/d/"+x.fileId+"/view");
+const docGet=x=>x.url||("https://drive.google.com/uc?export=download&id="+x.fileId);
+const mb=n=>n?(Number(n)/1048576).toFixed(n>1048576?1:2)+" MB":"";
+async function viewDocs(kind){
+  const K=KIND[kind],team=role()&&CAN.docs(role());
+  app(shell(`<section class="panel"><h2>${K.many}</h2><p class="muted small">Opening…</p></section>`,K.hash));
+  let r;try{r=await api("docList",{})}catch(e){if(/Unknown action/.test(e.message))r={docs:[],now:null};else{app(shell(`<section class="panel"><h2>${K.many}</h2><p class="err">${esc(e.message)}</p></section>`,K.hash));return}}
+  const list=(r.docs||[]).filter(x=>x.kind===kind),now=r.now;
+  const groups={};list.forEach(x=>{const g=x.session||"";(groups[g]=groups[g]||[]).push(x)});
+  const item=x=>`<div class="doc"><div><b>${esc(x.title)}</b>${x.by?`<span class="muted small">${esc(x.by)}</span>`:""}${now&&now.id===x.id?'<span class="tag" style="background:var(--ok-soft,#dff3e4)">Showing now</span>':""}</div>
+    <div class="row"><button class="ghost" data-view="${esc(x.id)}">Open</button><a class="btn ghost" href="${esc(docGet(x))}" target="_blank" rel="noopener">Download</a>
+    ${team?`${now&&now.id===x.id?`<button data-stop="1">Stop showing</button>`:`<button class="okb" data-show="${esc(x.id)}">Show to everyone now</button>`}<button class="ghost" data-del="${esc(x.id)}">Remove</button>`:""}</div></div>`;
+  const body=list.length?Object.keys(groups).map(g=>`${g?`<h3>${esc(g)}</h3>`:""}${groups[g].map(item).join("")}`).join(""):`<p>The ${K.many.toLowerCase()} will appear here as they come in. When one is called at the meeting, it opens on your phone by itself.</p>`;
+  const days=CONFIG.PROGRAMME.map(x=>x.day);
+  app(shell(`<section class="panel"><h2>${K.many}</h2>${body}</section>
+  ${team?`<section class="panel"><h2>Add a ${K.one}</h2><p class="small muted">PDF works best on every phone. Word and PowerPoint files also open. Up to about 40 MB.</p>
+    <form id="df" novalidate><label for="dt">Title<input id="dt" placeholder="${kind==="report"?"Report of the Board of Christian Education":"Presentation on the 2027 budget"}"></label>
+    <div class="grid2"><label for="db">Presented by<input id="db" placeholder="Rev. or Sis. full name, office"></label><label for="ds">Session<input id="ds" list="dsl" placeholder="Thursday 3 December"><datalist id="dsl">${days.map(d=>`<option value="${esc(d)}">`).join("")}</datalist></label></div>
+    <label for="dfile">File<input id="dfile" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*"></label>
+    <p id="de" class="err" hidden></p><button type="submit">Upload</button></form></section>`:""}`,K.hash));
+  document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>{const x=list.find(y=>y.id===b.dataset.view);if(x)docOverlay(x,false)});
+  document.querySelectorAll("[data-show]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{const r=await api("docShow",{pin:pin(),id:b.dataset.show});NOW=r.now;nowBar();toast("Showing on every open phone now");viewDocs(kind)}catch(e){toast(e.message);b.disabled=false}});
+  document.querySelectorAll("[data-stop]").forEach(b=>b.onclick=async()=>{try{await api("docShow",{pin:pin(),id:""});NOW=null;nowBar();toast("Stopped showing");viewDocs(kind)}catch(e){toast(e.message)}});
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{const x=list.find(y=>y.id===b.dataset.del);if(!x||!confirm("Remove \""+x.title+"\" from the app?"))return;try{await api("docDel",{pin:pin(),id:x.id});toast("Removed");viewDocs(kind)}catch(e){toast(e.message)}});
+  const f=$("#df");if(f)f.onsubmit=async e=>{e.preventDefault();const er=$("#de"),file=$("#dfile").files[0],t=$("#dt").value.trim();er.hidden=true;
+    if(!t||!file){er.textContent="Please give a title and choose the file.";er.hidden=false;return}
+    if(file.size>40*1048576){er.textContent="This file is too big. Save it as a PDF and try again.";er.hidden=false;return}
+    const btn=f.querySelector("button");btn.disabled=true;btn.textContent="Uploading… please keep this page open";
+    try{const data=await new Promise((ok,no)=>{const rd=new FileReader();rd.onload=()=>ok(String(rd.result).split(",")[1]);rd.onerror=no;rd.readAsDataURL(file)});
+      await api("docUpload",{pin:pin(),kind,title:t,by:$("#db").value.trim(),session:$("#ds").value.trim(),name:file.name,mime:file.type||"application/octet-stream",size:file.size,data});
+      toast("Uploaded");viewDocs(kind)}catch(x){er.textContent=x.message;er.hidden=false;btn.disabled=false;btn.textContent="Upload"}};
+}
+function docOverlay(x,called){
+  let o=$("#docov");if(o)o.remove();o=document.createElement("div");o.id="docov";o.dataset.called=called?"1":"";
+  o.innerHTML=`<div class="dov-bar"><div><span class="eyebrow" style="color:inherit;opacity:.8">${called?"Now presenting":esc(KIND[x.kind]?KIND[x.kind].one:"document")}</span><b>${esc(x.title)}</b>${x.by?`<span class="small" style="opacity:.85">${esc(x.by)}</span>`:""}</div>
+    <div class="row"><a class="btn ghost" href="${esc(docOpen(x))}" target="_blank" rel="noopener">Full screen</a><button class="ghost" id="dovx">Close</button></div></div>
+    <iframe src="${esc(docUrl(x))}" title="${esc(x.title)}" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+  document.body.appendChild(o);document.body.style.overflow="hidden";
+  $("#dovx").onclick=()=>{o.remove();document.body.style.overflow=""};
+}
+/* What is being shown now: every open phone asks every 20 seconds (only while the app is on screen) */
+let NOW=null;
+function nowBar(){let b=$("#nowbar");if(!NOW){if(b)b.remove();return}
+  if(!b){b=document.createElement("button");b.id="nowbar";document.body.appendChild(b)}
+  b.innerHTML=`<span>Now presenting</span><b>${esc(NOW.title)}</b><span class="small">Tap to open</span>`;b.onclick=()=>docOverlay(NOW,true)}
+async function pollNow(){if(document.visibilityState!=="visible")return;
+  try{let n;if(LIVE){const r=await fetch(CONFIG.API_URL+"?now=1");const j=await r.json();n=j.data&&j.data.id?j.data:null}else n=store.get("pm26_now",null);
+    const was=NOW&&NOW.id+"|"+NOW.at;NOW=n;nowBar();
+    if(n&&n.id+"|"+n.at!==was&&store.get("pm_seen","")!==n.id+"|"+n.at){store.set("pm_seen",n.id+"|"+n.at);docOverlay(n,true)}
+    if(!n){const o=$("#docov");if(o&&o.dataset.called)o.remove()}}catch(e){}}
+setInterval(pollNow,20000);document.addEventListener("visibilitychange",pollNow);setTimeout(pollNow,1500);
+
 /* ============ ROUTER ============ */
 function route(){
   const h=(location.hash||"").slice(1);
@@ -737,7 +804,7 @@ function route(){
   if(h.startsWith("deskedit-"))return viewEdit(h.slice(9),true);
   if(h.startsWith("pass-"))return viewPass(h.slice(5));
   if(h.startsWith("parking-"))return viewParking(h.slice(8));
-  const m={register:viewRegister,parking:()=>viewParking(),worship:viewWorship,find:viewFind,team:viewTeam,regdesk:viewRegDesk,parkdesk:viewParkDesk,gate:viewGate};
+  const m={register:viewRegister,parking:()=>viewParking(),worship:viewWorship,reports:()=>viewDocs("report"),presentations:()=>viewDocs("presentation"),find:viewFind,team:viewTeam,regdesk:viewRegDesk,parkdesk:viewParkDesk,gate:viewGate};
   return (m[h]||viewHome)();
 }
 window.addEventListener("hashchange",()=>{route();window.scrollTo(0,0)});
