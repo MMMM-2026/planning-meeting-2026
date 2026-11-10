@@ -296,10 +296,10 @@ function viewRegister(){
         <label for="conference">Conference<select id="conference">${confOpts("")}</select></label>
       </div>
             <div class="grid2">
-        <label for="designation">Designation<input id="designation" list="desigs" placeholder="e.g. Pastor, Steward"></label>
+        <label for="designation">Designation<select id="designation"><option value="">Choose</option><optgroup label="Clergy"><option>Bishop</option><option>Presiding Elder</option><option>Pastor</option><option>Itinerant Elder, not yet appointed</option><option>Itinerant Deacon, not yet appointed</option><option>Supernumerary Preacher</option><option>Superannuated Preacher</option><option>Local Elder</option><option>Local Deacon</option><option>Licentiate</option><option>Chaplain</option></optgroup><optgroup label="Officers"><option>Episcopal District Officer</option><option>Conference President</option><option>Auxiliary President</option></optgroup><optgroup label="Laity"><option>Steward</option><option>Trustee</option><option>Class Leader</option><option>Life Member</option><option>Member</option><option>PK (Preacher's Kid)</option></optgroup><option value="__other">Other, I will type it</option></select><input id="desigOther" placeholder="Type your designation" hidden style="margin-top:6px"></label>
         <label for="auxiliary">Auxiliary<select id="auxiliary"><option value="">Choose</option><option>WMS</option><option>Lay Organization</option><option>Sons of Allen</option><option>ACE League</option><option>CMLF</option><option>RAYAC</option><option>YPD</option><option>Christian Education</option><option>MSWAWO and PKs</option><option>WACLO</option><option>Board of Examiners</option><option>None</option></select></label>
       </div>
-      <datalist id="desigs"><option>Bishop</option><option>Presiding Elder</option><option>Pastor</option><option>Itinerant Elder, not yet appointed</option><option>Itinerant Deacon, not yet appointed</option><option>Supernumerary Preacher</option><option>Superannuated Preacher</option><option>Episcopal District Officer</option><option>Conference President</option><option>Life Member</option><option>PK (Preacher's Kid)</option><option>Local Elder</option><option>Local Deacon</option><option>Licentiate</option><option>Steward</option><option>Trustee</option><option>Class Leader</option><option>Auxiliary President</option><option>Member</option></datalist>
+      
       <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Registration type</legend>
         <div class="types"><label><input type="radio" name="type" value="Delegate"> Delegate</label><label><input type="radio" name="type" value="Clergy"> Clergy</label><label><input type="radio" name="type" value="Observer"> Observer</label></div>
       </fieldset>
@@ -308,14 +308,15 @@ function viewRegister(){
       <button type="submit" id="rsub" class="brass">Register${CONFIG.REG_FEE?` · ${R(CONFIG.REG_FEE)}`:""}</button>
     </form>
   </section>`,"register"));
-  bindFinder("rfind",x=>{setTitle("rtitle",x.title);if(x.aux)$("#auxiliary").value=x.aux;$("#surname").value=x.surname;$("#names").value=x.names;$("#church").value=x.church;$("#district").value=x.district;if(x.conference)$("#conference").value=x.conference;$("#designation").value=x.desig;const c=document.querySelector('input[name="type"][value="Clergy"]');if(c&&x.clergy)c.checked=true;$("#email").focus()});
+  $("#designation").onchange=e=>{const o=$("#desigOther");o.hidden=e.target.value!=="__other";if(!o.hidden)o.focus()};
+  bindFinder("rfind",x=>{setTitle("rtitle",x.title);if(x.aux)$("#auxiliary").value=x.aux;$("#surname").value=x.surname;$("#names").value=x.names;$("#church").value=x.church;$("#district").value=x.district;if(x.conference)$("#conference").value=x.conference;setTitle("designation",x.desig);const c=document.querySelector('input[name="type"][value="Clergy"]');if(c&&x.clergy)c.checked=true;$("#email").focus()});
   $("#rf").onsubmit=async e=>{
     e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#rerr");
     const t=document.querySelector('input[name="type"]:checked');
-    const data={title:v("rtitle"),surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:v("designation"),auxiliary:v("auxiliary"),type:t?t.value:"",consent:$("#consent").checked};
-    const miss=["rtitle","surname","names","email","mobile","church","district","conference","designation","auxiliary"].filter(k=>!data[k]);
+    const data={title:v("rtitle"),surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:$("#designation").value==="__other"?v("desigOther"):v("designation"),auxiliary:v("auxiliary"),type:t?t.value:"",consent:$("#consent").checked};
+    const miss=["title","surname","names","email","mobile","church","district","conference","designation","auxiliary"].filter(k=>!data[k]);
     const fail=m=>{er.textContent=m;er.hidden=false};
-    if(miss.length){fail("Please fill in every field.");$("#"+miss[0]).focus();return}
+    if(miss.length){fail("Please fill in every field.");$("#"+(miss[0]==="title"?"rtitle":miss[0])).focus();return}
     if(!/^\S+@\S+\.\S+$/.test(data.email))return fail("Please check the email address.");
     if(digits(data.mobile).length<9)return fail("Please check the mobile number.");
     if(!data.type)return fail("Please choose a registration type.");
