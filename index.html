@@ -214,6 +214,7 @@ async function api(action,p={}){
       let code;do{code=mkCode("PM")}while(findR(code));
       const rec={code,created:nowIso(),title:p.title||"",surname:p.surname,names:p.names,email:em,mobile:p.mobile,church:p.church,district:p.district,conference:p.conference,type:p.type,designation:p.designation,auxiliary:p.auxiliary,consent:!!p.consent};
       d.regs.push(rec);save(d);return rec}
+    case "getRegFull":{const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");const ok=p.pin?!!(pinRole(p.pin)&&CAN.regDesk(pinRole(p.pin))):(digits(p.mobile).length>=9&&digits(p.mobile).slice(-9)===digits(r.mobile).slice(-9));if(!ok)throw new Error("That mobile number does not match this registration.");return r}
     case "editReg":{need(CAN.regDesk);const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");Object.assign(r,cleanEdit(p.changes),{edited:nowIso(),editedBy:"desk"});save(d);return r}
     case "fixReg":{const r=findR(p.code);if(!r||digits(r.mobile).slice(-9)!==digits(p.mobile).slice(-9))throw new Error("That mobile number does not match this registration.");Object.assign(r,cleanEdit(p.changes),{edited:nowIso(),editedBy:"self"});save(d);return r}
     case "getReg":{const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");return r}
@@ -638,10 +639,10 @@ async function viewEdit(code,desk){
       $("#esub").disabled=true;$("#esub").textContent="Saving...";
       try{await api(desk?"editReg":"fixReg",desk?{pin:pin(),code,changes:c}:{code,mobile:mob,changes:c});toast("Corrections saved");location.hash=desk?"regdesk":"ticket-"+code}
       catch(x){er.textContent=x.message;er.hidden=false;$("#esub").disabled=false;$("#esub").textContent="Save corrections"}}};
-  if(desk)return show("");
+  if(desk){try{r=await api("getRegFull",{pin:pin(),code})}catch(e){toast(e.message);return}return show("")}
   app(shell(`<section class="panel"><h2>Correct my details</h2><p>To keep your registration safe, please enter the mobile number you registered with.</p>
     <form id="vf" novalidate style="display:flex;flex-direction:column;gap:10px"><label for="vm">Mobile number<input id="vm" inputmode="tel" placeholder="07X XXX XXXX"></label><p id="verr" class="err" hidden></p><button type="submit">Continue</button></form></section>`,""));
-  $("#vf").onsubmit=e=>{e.preventDefault();const m=$("#vm").value;if(digits(m).slice(-9)!==digits(r.mobile).slice(-9)||digits(m).length<9){$("#verr").textContent="That number does not match this registration. The registration desk can help you.";$("#verr").hidden=false;return}show(m)}}
+  $("#vf").onsubmit=async e=>{e.preventDefault();const m=$("#vm").value;try{r=await api("getRegFull",{code,mobile:m});show(m)}catch(x){$("#verr").textContent="That number does not match this registration. The registration desk can help you.";$("#verr").hidden=false}}}
 
 /* ============ FIND ============ */
 function viewFind(){
