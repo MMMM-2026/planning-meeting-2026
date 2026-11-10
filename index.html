@@ -435,12 +435,17 @@ const CONF_OFFICERS=[["Sis.", "Helen", "Armstrong", "West Conference WMS Preside
 const PEOPLE=[...CLERGY.b.map(n=>({...splitClergy(n,"Bishop"),clergy:true,church:"",district:"19th Episcopal District",conference:"M.M. Mokone Memorial Conference",desig:"Bishop",label:"Bishop"})),
  ...CLERGY.pe.map(x=>({...splitClergy(x[0],"Presiding Elder"),clergy:true,church:"",district:x[1],conference:"M.M. Mokone Memorial Conference",desig:"Presiding Elder",label:"Presiding Elder · "+x[1]})),
  ...CLERGY.p.map(x=>({...splitClergy(x[0],"Rev."),clergy:true,church:x[1],district:x[2],conference:"M.M. Mokone Memorial Conference",desig:"Pastor",label:x[1]+" · "+x[2]})),
- ...MORE.map(x=>({title:x[6]==="Presiding Elder"&&x[0]==="Rev."?"Presiding Elder":x[0],names:x[1],surname:x[2],clergy:/^(Rev|Lic|Presiding|Bishop)/.test(x[0])||x[6]==="Presiding Elder",church:x[3],district:x[4],conference:x[5],desig:x[6],label:[x[3]||x[6],x[4],x[5].replace(" Conference",""),x[7]].filter(Boolean).join(" · ")})),
- ...CONF_OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:false,church:"",district:"",conference:o[5],desig:o[3],aux:o[4],label:o[3]})),
- ...OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:o[0].startsWith("Rev"),church:"",district:"19th Episcopal District",conference:"",desig:o[3],aux:o[4],label:o[3]}))];
+ ...MORE.map(x=>({title:x[6]==="Presiding Elder"?(x[0]==="Rev. Dr."?"Presiding Elder Dr.":x[0]==="Rev."?"Presiding Elder":x[0]):x[0],names:x[1],surname:x[2],clergy:/^(Rev|Lic|Presiding|Bishop)/.test(x[0])||x[6]==="Presiding Elder",church:x[3],district:x[4],conference:x[5],desig:x[7]?x[6]+", "+x[7]:x[6],label:[x[3]||x[6],x[4],x[5].replace(" Conference",""),x[7]].filter(Boolean).join(" · ")})),
+ ...CONF_OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:false,church:"",district:"",conference:o[5],desig:o[3],aux:o[4],label:o[3],office:o[3]})),
+ ...OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:o[0].startsWith("Rev"),church:"",district:"19th Episcopal District",conference:"",desig:o[3],aux:o[4],label:o[3],office:o[3]}))];
+/* one entry per person: an officer who is also on a clergy list keeps the clergy entry with the office added */
+(()=>{const key=p=>(p.names+" "+p.surname).toLowerCase().replace(/[^a-z ]/g,"").trim();
+  for(let i=PEOPLE.length-1;i>=0;i--){const o=PEOPLE[i];if(!o.office)continue;
+    const c=PEOPLE.find(p=>p!==o&&!p.office&&key(p)===key(o));if(!c)continue;
+    c.desig=c.desig+", "+o.office;c.label=c.label+" · "+o.office;if(o.aux&&!c.aux)c.aux=o.aux;PEOPLE.splice(i,1)}})();
 const CHURCHES=[...new Set([...PEOPLE.map(p=>p.church),...NOPASTOR.map(c=>c[0])].filter(Boolean))].sort();
 const DISTRICTS=[...new Set([...PEOPLE.map(p=>p.district),...NOPASTOR.map(c=>c[1])].filter(d=>d&&/District$/.test(d)))].sort();
-function titleOpts(){return ["Rev.","Rev. Dr.","Rev. Prof.","Bishop","Presiding Elder","Lic.","Sis.","Bro.","Dr.","Prof.","Mother"].map(t=>`<option>${t}</option>`).join("")}
+function titleOpts(){return ["Rev.","Rev. Dr.","Rev. Prof.","Bishop","Presiding Elder","Presiding Elder Dr.","Lic.","Sis.","Bro.","Dr.","Prof.","Mother"].map(t=>`<option>${t}</option>`).join("")}
 function setTitle(id,t){const el=$("#"+id);if(![...el.options].some(o=>o.value===t))el.insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`);el.value=t}
 function finderHtml(id){return `<div style="display:flex;flex-direction:column;gap:6px;background:var(--brass-soft);border-radius:12px;padding:12px"><label for="${id}">Clergy or District officer? Find yourself<input id="${id}" autocomplete="off" placeholder="Type your name or surname, e.g. Moremi"></label><div id="${id}r" style="display:flex;flex-direction:column;gap:6px"></div><span class="small muted">Your details fill in by themselves. Everyone else, please fill in the form below.</span></div>`}
 function bindFinder(id,pick){const inp=$("#"+id),box=$("#"+id+"r");inp.oninput=()=>{const q=inp.value.toLowerCase().trim().split(/\s+/).filter(Boolean);if(!q.length||q.join("").length<2){box.innerHTML="";return}
