@@ -118,7 +118,7 @@ const CONFIG={
   EVENT:"19th Episcopal District Planning Meeting",
   APP:"Planning Meeting 2026",
   HOST:"Ebenezer AME Church",
-  DATES:"3 to 5 December 2026",
+  DATES:"2 to 6 December 2026",
   THEME:"Reviving the Connection: Exceedingly, Abundantly Above All We Can Ask or Think",
   REG_FEE:0,             // registration fee in rand; 0 = no fee
   PARK_FEE:50,
@@ -330,7 +330,7 @@ async function viewTicket(code){
     <div class="perf"></div>
     <div class="ticket-body">
       <h3>Coming by car?</h3>
-      <p class="small muted">Book your parking bay at Ebenezer now and drive straight in. ${R(CONFIG.PARK_FEE)} once off for all three days.</p>
+      <p class="small muted">Book your parking bay at Ebenezer now and drive straight in. ${R(CONFIG.PARK_FEE)} once off for all five days.</p>
       <a class="btn brass" href="#parking-${esc(r.code)}">Book parking</a>
       <p class="blessing">We look forward to welcoming you. God go with you.</p>
     </div>
@@ -352,7 +352,7 @@ async function viewParking(regCode){
   const clergy=pre.type==="Clergy";
   app(shell(`${panel}<section class="panel">
     <h2>Book your bay</h2>
-    <p class="small muted">Once off ${R(CONFIG.PARK_FEE)} for all three days, paid by EFT to Ebenezer AME Church.</p>
+    <p class="small muted">Once off ${R(CONFIG.PARK_FEE)} for all five days, paid by EFT to Ebenezer AME Church.</p>
     <form id="pf" novalidate>
       ${finderHtml("pfind")}
       <div class="grid2">
@@ -417,7 +417,7 @@ async function viewPass(code){
   const rl=role();let gate="";
   if(rl&&CAN.gate(rl)){
     if(r.status==="paid")gate=`<div class="verdict v-ok">Paid. Let this car in.</div><button class="okb" id="ci" style="width:100%">Check in ${esc(r.plate)}</button>`;
-    else if(r.status==="in")gate=`<div class="verdict v-in">Already checked in</div><p class="small muted">The pass is valid for all three days, so re entry is fine.</p>`;
+    else if(r.status==="in")gate=`<div class="verdict v-in">Already checked in</div><p class="small muted">The pass is valid for all five days, so re entry is fine.</p>`;
     else gate=`<div class="verdict v-warn">Not paid yet</div>${CAN.markPaid(rl)?`<div class="row" style="justify-content:center"><button class="okb" data-pay="Cash">Paid cash</button><button class="ghost" data-pay="Card">Paid card</button><button class="ghost" data-pay="EFT">EFT received</button></div>`:`<p class="small muted">Take ${R(CONFIG.PARK_FEE)} and ask the host team to mark it paid.</p>`}`;
   }
   app(shell(`<article class="ticket">
