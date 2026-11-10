@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Planning Meeting 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,600;1,700&family=Cinzel:wght@600;700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
@@ -120,6 +120,7 @@ const CONFIG={
   EVENT:"19th Episcopal District Planning Meeting",
   APP:"Planning Meeting 2026",
   HOST:"Ebenezer AME Church",
+  HOST_PLACE:"Atteridgeville",
   DATES:"2 to 6 December 2026",
   PROGRAMME:[
     {day:"Wednesday 2 December",what:"19th Episcopal District Women's Missionary Society Convention"},
@@ -351,6 +352,12 @@ async function viewTicket(code){
       <h3>Coming by car?</h3>
       <p class="small muted">Book your parking bay at Ebenezer now and drive straight in. ${R(CONFIG.PARK_FEE)} once off.</p>
       <a class="btn brass" href="#parking-${esc(r.code)}">Book parking</a>
+    </div>
+    <div class="perf"></div>
+    <div class="ticket-body">
+      <h3>Tell the world you are coming</h3>
+      <p class="small muted">Make your own WhatsApp status card with your photo.</p>
+      <a class="btn" href="#card-${esc(r.code)}">Make my status card</a>
       <p class="blessing">We look forward to welcoming you. God go with you.</p>
     </div>
   </article>`,""));
@@ -498,6 +505,89 @@ function viewWorship(){
   </section>`,"worship"));
 }
 
+/* ============ STATUS CARD ============ */
+const CARD={w:1080,h:1920};
+let crestImg=null;
+function loadImg(src){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src})}
+function wrapLines(ctx,text,max){const w=String(text).split(/\s+/);const out=[];let cur="";w.forEach(x=>{const t=cur?cur+" "+x:x;if(ctx.measureText(t).width>max&&cur){out.push(cur);cur=x}else cur=t});if(cur)out.push(cur);return out}
+function drawCard(ctx,d,photo,zoom,ox,oy){
+  const W=CARD.w,H=CARD.h,cx=W/2,py=770,pr=280;
+  /* deep royal purple field */
+  let g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,"#1f0836");g.addColorStop(.5,"#3b145c");g.addColorStop(1,"#150526");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  /* glory behind the photo */
+  g=ctx.createRadialGradient(cx,py,40,cx,py,900);g.addColorStop(0,"rgba(255,214,130,.55)");g.addColorStop(.35,"rgba(196,140,50,.18)");g.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  /* rays: exceedingly, abundantly */
+  ctx.save();ctx.translate(cx,py);for(let i=0;i<48;i++){ctx.rotate(Math.PI*2/48);const a=i%2?.05:.11;const rg=ctx.createLinearGradient(0,0,0,-1150);rg.addColorStop(0,`rgba(255,220,150,${a})`);rg.addColorStop(1,"rgba(255,220,150,0)");ctx.fillStyle=rg;ctx.beginPath();ctx.moveTo(-6,0);ctx.lineTo(-38,-1150);ctx.lineTo(38,-1150);ctx.lineTo(6,0);ctx.fill()}ctx.restore();
+  /* concentric halo rings */
+  ctx.strokeStyle="rgba(232,194,122,.28)";ctx.lineWidth=2;[pr+40,pr+80,pr+130].forEach((r,i)=>{ctx.setLineDash(i===1?[4,14]:[]);ctx.beginPath();ctx.arc(cx,py,r,0,Math.PI*2);ctx.stroke()});ctx.setLineDash([]);
+  /* sparkles */
+  const sp=[[150,560,5],[930,620,6],[200,1080,4],[880,1040,5],[120,820,3],[960,860,4],[300,430,3],[790,440,4]];ctx.fillStyle="#ffe7a8";sp.forEach(([x,y,r])=>{ctx.beginPath();ctx.moveTo(x,y-r*4);ctx.quadraticCurveTo(x,y,x+r*4,y);ctx.quadraticCurveTo(x,y,x,y+r*4);ctx.quadraticCurveTo(x,y,x-r*4,y);ctx.quadraticCurveTo(x,y,x,y-r*4);ctx.fill()});
+  /* crest and heading */
+  if(crestImg){const cw=250,ch=cw*crestImg.height/crestImg.width;ctx.drawImage(crestImg,cx-cw/2,70,cw,ch)}
+  ctx.textAlign="center";ctx.fillStyle="#e8c27a";ctx.font="700 30px Cinzel";ctx.fillText("19TH EPISCOPAL DISTRICT",cx,360);
+  ctx.fillStyle="rgba(255,255,255,.75)";ctx.font="600 22px Cinzel";ctx.fillText("AFRICAN METHODIST EPISCOPAL CHURCH",cx,398);
+  /* photo */
+  ctx.save();ctx.beginPath();ctx.arc(cx,py,pr,0,Math.PI*2);ctx.closePath();ctx.clip();
+  if(photo){const s=Math.max(2*pr/photo.width,2*pr/photo.height)*zoom;const w=photo.width*s,h=photo.height*s;ctx.drawImage(photo,cx-w/2+ox,py-h/2+oy,w,h)}
+  else{g=ctx.createLinearGradient(0,py-pr,0,py+pr);g.addColorStop(0,"#5a2d80");g.addColorStop(1,"#2a0f45");ctx.fillStyle=g;ctx.fillRect(cx-pr,py-pr,2*pr,2*pr);ctx.fillStyle="rgba(232,194,122,.8)";ctx.font="italic 600 40px 'Playfair Display'";ctx.fillText("Your photo here",cx,py+12)}
+  ctx.restore();
+  g=ctx.createLinearGradient(cx-pr,py-pr,cx+pr,py+pr);g.addColorStop(0,"#fff0c2");g.addColorStop(.35,"#d4a24c");g.addColorStop(.65,"#8a5d14");g.addColorStop(1,"#f3d38a");
+  ctx.strokeStyle=g;ctx.lineWidth=16;ctx.beginPath();ctx.arc(cx,py,pr+8,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle="rgba(255,240,194,.6)";ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,py,pr+26,0,Math.PI*2);ctx.stroke();
+  /* ribbon: I AM REGISTERED */
+  const ry=py+pr-10,rw=560,rh=92;
+  ctx.fillStyle="#7a5210";[[-1],[1]].forEach(([k])=>{ctx.beginPath();ctx.moveTo(cx+k*(rw/2-30),ry+18);ctx.lineTo(cx+k*(rw/2+70),ry+18);ctx.lineTo(cx+k*(rw/2+40),ry+18+rh/2);ctx.lineTo(cx+k*(rw/2+70),ry+18+rh);ctx.lineTo(cx+k*(rw/2-30),ry+18+rh);ctx.fill()});
+  g=ctx.createLinearGradient(0,ry,0,ry+rh);g.addColorStop(0,"#f6dc98");g.addColorStop(.5,"#d4a24c");g.addColorStop(1,"#a8761f");ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(cx-rw/2,ry);ctx.lineTo(cx+rw/2,ry);ctx.lineTo(cx+rw/2,ry+rh);ctx.lineTo(cx-rw/2,ry+rh);ctx.fill();
+  ctx.fillStyle="#2a0f45";ctx.font="700 46px Cinzel";ctx.fillText("I AM REGISTERED",cx,ry+rh/2+16);
+  /* name */
+  ctx.fillStyle="#ffffff";ctx.font="900 76px 'Playfair Display'";let y=ry+rh+110;
+  const nl=wrapLines(ctx,d.name,940).slice(0,2);if(nl.length>1){ctx.font="900 64px 'Playfair Display'"}
+  wrapLines(ctx,d.name,940).slice(0,2).forEach(l=>{ctx.fillText(l,cx,y);y+=nl.length>1?74:84});
+  ctx.fillStyle="#d9c6ee";ctx.font="500 34px 'Public Sans'";wrapLines(ctx,d.sub,920).slice(0,2).forEach(l=>{ctx.fillText(l,cx,y+4);y+=46});
+  /* divider */
+  y+=26;ctx.strokeStyle="#d4a24c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-300,y);ctx.lineTo(cx-24,y);ctx.moveTo(cx+24,y);ctx.lineTo(cx+300,y);ctx.stroke();
+  ctx.fillStyle="#e8c27a";ctx.beginPath();ctx.moveTo(cx,y-12);ctx.lineTo(cx+12,y);ctx.lineTo(cx,y+12);ctx.lineTo(cx-12,y);ctx.fill();
+  /* event */
+  y+=70;ctx.fillStyle="#f3d38a";ctx.font="700 56px Cinzel";ctx.fillText("PLANNING MEETING 2026",cx,y);
+  y+=56;ctx.fillStyle="#ffffff";ctx.font="600 34px 'Public Sans'";ctx.fillText(d.dates,cx,y);
+  y+=48;ctx.fillStyle="#d9c6ee";ctx.font="500 30px 'Public Sans'";ctx.fillText(d.host,cx,y);
+  /* theme band */
+  const by=Math.max(y+120,1690);g=ctx.createLinearGradient(0,by,0,H);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.45)");ctx.fillStyle=g;ctx.fillRect(0,by-60,W,H-by+60);
+  ctx.fillStyle="#f3d38a";ctx.font="italic 700 58px 'Playfair Display'";ctx.fillText("Reviving the Connection",cx,by+20);
+  ctx.fillStyle="#ffffff";ctx.font="italic 600 32px 'Playfair Display'";ctx.fillText("Exceedingly, abundantly above all we can ask or think",cx,by+76);
+  ctx.fillStyle="#e8c27a";ctx.font="600 24px Cinzel";ctx.fillText("EPHESIANS 3:20 TO 21",cx,by+122);
+  ctx.fillStyle="rgba(255,255,255,.45)";ctx.font="500 20px 'JetBrains Mono'";ctx.fillText(d.code,cx,Math.min(by+178,H-30));
+}
+async function viewCard(code){
+  let r;try{r=await api("getReg",{code})}catch(e){app(shell(`<section class="panel"><h2>Not found</h2><p class="muted">${esc(e.message)}</p></section>`,""));return}
+  const title=r.title||(r.type==="Clergy"?"Rev.":"");
+  const d={name:[title,r.names,r.surname].filter(Boolean).join(" "),sub:[r.designation,r.church].filter(Boolean).join(" · "),dates:CONFIG.DATES,host:CONFIG.HOST+(CONFIG.HOST_PLACE?", "+CONFIG.HOST_PLACE:""),code:"Registration "+r.code};
+  app(shell(`<section class="panel"><h2>Your status card</h2><p class="small muted">Choose a photo, move it into place, then share it to your WhatsApp status. Your photo stays on your phone.</p>
+    <canvas id="cv" width="${CARD.w}" height="${CARD.h}" style="width:100%;max-width:360px;align-self:center;border-radius:14px;touch-action:none;cursor:grab"></canvas>
+    <label class="btn ghost" style="text-align:center">Choose my photo<input type="file" id="ph" accept="image/*" hidden></label>
+    <label for="zm" class="small">Zoom<input type="range" id="zm" min="1" max="3" step="0.01" value="1"></label>
+    <p class="small muted" id="hint">Drag the photo on the card to move it.</p>
+    <div class="row"><button id="shr" class="brass" style="flex:1">Share to WhatsApp</button><button id="sav" class="ghost" style="flex:1">Save image</button></div>
+    <a class="btn ghost" href="#ticket-${esc(code)}">Back to my ticket</a></section>`,""));
+  const cv=$("#cv"),ctx=cv.getContext("2d");let photo=null,zoom=1,ox=0,oy=0;
+  try{await Promise.all(["900 76px 'Playfair Display'","italic 700 58px 'Playfair Display'","italic 600 32px 'Playfair Display'","700 56px Cinzel","600 24px Cinzel","600 34px 'Public Sans'","500 20px 'JetBrains Mono'"].map(f=>document.fonts.load(f)))}catch(e){}
+  if(!crestImg){try{crestImg=await loadImg("crest.png")}catch(e){}}
+  const paint=()=>drawCard(ctx,d,photo,zoom,ox,oy);paint();
+  $("#ph").onchange=async e=>{const f=e.target.files[0];if(!f)return;photo=await loadImg(URL.createObjectURL(f));zoom=1;ox=0;oy=0;$("#zm").value=1;paint()};
+  $("#zm").oninput=e=>{zoom=+e.target.value;paint()};
+  let drag=null;cv.onpointerdown=e=>{if(!photo)return;drag={x:e.clientX,y:e.clientY,ox,oy};cv.setPointerCapture(e.pointerId)};
+  cv.onpointermove=e=>{if(!drag)return;const k=CARD.w/cv.getBoundingClientRect().width;ox=drag.ox+(e.clientX-drag.x)*k;oy=drag.oy+(e.clientY-drag.y)*k;paint()};
+  cv.onpointerup=()=>drag=null;
+  const blob=()=>new Promise(ok=>cv.toBlob(ok,"image/jpeg",.92));
+  const fname="Planning-Meeting-2026-"+r.code+".jpg";
+  const save=async()=>{const b=await blob();const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname;document.body.appendChild(a);a.click();a.remove()};
+  $("#sav").onclick=save;
+  $("#shr").onclick=async()=>{if(!photo&&!confirm("You have not added your photo yet. Share the card without it?"))return;
+    const b=await blob(),f=new File([b],fname,{type:"image/jpeg"});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:"I am registered for the 19th Episcopal District Planning Meeting, "+CONFIG.DATES+". See you at Ebenezer."})}catch(e){}}
+    else{await save();toast("Card saved. Open WhatsApp, tap Status, and choose it from your photos.")}};
+}
+
 /* ============ CORRECT A REGISTRATION ============ */
 const EDIT_FIELDS=["title","surname","names","email","mobile","church","district","conference","designation","auxiliary","type"];
 function cleanEdit(c){const o={};EDIT_FIELDS.forEach(k=>{if(c&&c[k]!=null)o[k]=String(c[k]).trim()});return o}
@@ -623,6 +713,7 @@ function route(){
   const h=(location.hash||"").slice(1);
   if(h==="logout"){sess.del("pm_pin");sess.del("pm_role");toast("Signed out");location.hash="home";return}
   if(h.startsWith("ticket-"))return viewTicket(h.slice(7));
+  if(h.startsWith("card-"))return viewCard(h.slice(5));
   if(h.startsWith("edit-"))return viewEdit(h.slice(5),false);
   if(h.startsWith("deskedit-"))return viewEdit(h.slice(9),true);
   if(h.startsWith("pass-"))return viewPass(h.slice(5));
