@@ -34,6 +34,7 @@ h2{font-family:var(--f-display);font-weight:600;font-size:20px;margin:0}
 h3{font-family:var(--f-display);font-weight:600;font-size:16px;margin:0}
 p{margin:0}
 .muted{color:var(--muted)}.small{font-size:13px}
+.prog{display:flex;flex-direction:column;gap:10px}.prog-row{display:flex;flex-direction:column;gap:2px;padding-left:12px;border-left:3px solid var(--brass)}.prog-row span{color:var(--muted);font-size:14px}
 .hero .facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .hero .fact{border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 11px;font-size:13px}
 nav.tabs{display:flex;gap:6px;flex-wrap:wrap}
@@ -119,6 +120,10 @@ const CONFIG={
   APP:"Planning Meeting 2026",
   HOST:"Ebenezer AME Church",
   DATES:"2 to 6 December 2026",
+  PROGRAMME:[
+    {day:"Wednesday 2 December",what:"19th Episcopal District Women's Missionary Society Convention"},
+    {day:"Thursday 3 to Sunday 6 December",what:"Planning Meeting and BCE Congress, closing on Sunday"}
+  ],
   THEME:"Reviving the Connection: Exceedingly, Abundantly Above All We Can Ask or Think",
   REG_FEE:0,             // registration fee in rand; 0 = no fee
   PARK_FEE:50,
@@ -257,6 +262,9 @@ function viewHome(){
     <p>One app for the whole meeting. Register once, book your parking, and follow the worship from your phone.</p>
     <p class="small muted"><em>${esc(CONFIG.THEME)}</em> · Ephesians 3:20 to 21</p>
   </section>
+  <section class="panel"><h3>The week at Ebenezer</h3>
+    <div class="prog">${CONFIG.PROGRAMME.map(x=>`<div class="prog-row"><b>${esc(x.day)}</b><span>${esc(x.what)}</span></div>`).join("")}</div>
+  </section>
   <div class="cards">
     <a class="room" href="#register"><span class="ic">📝</span><b>Register</b><span>Delegates, clergy and observers</span></a>
     <a class="room" href="#parking"><span class="ic">🚗</span><b>Parking</b><span>Book a bay at Ebenezer for ${R(CONFIG.PARK_FEE)}</span></a>
@@ -330,7 +338,7 @@ async function viewTicket(code){
     <div class="perf"></div>
     <div class="ticket-body">
       <h3>Coming by car?</h3>
-      <p class="small muted">Book your parking bay at Ebenezer now and drive straight in. ${R(CONFIG.PARK_FEE)} once off for all five days.</p>
+      <p class="small muted">Book your parking bay at Ebenezer now and drive straight in. ${R(CONFIG.PARK_FEE)} once off.</p>
       <a class="btn brass" href="#parking-${esc(r.code)}">Book parking</a>
       <p class="blessing">We look forward to welcoming you. God go with you.</p>
     </div>
@@ -352,7 +360,7 @@ async function viewParking(regCode){
   const clergy=pre.type==="Clergy";
   app(shell(`${panel}<section class="panel">
     <h2>Book your bay</h2>
-    <p class="small muted">Once off ${R(CONFIG.PARK_FEE)} for all five days, paid by EFT to Ebenezer AME Church.</p>
+    <p class="small muted">Once off ${R(CONFIG.PARK_FEE)}, paid by EFT to Ebenezer AME Church.</p>
     <form id="pf" novalidate>
       ${finderHtml("pfind")}
       <div class="grid2">
@@ -417,7 +425,7 @@ async function viewPass(code){
   const rl=role();let gate="";
   if(rl&&CAN.gate(rl)){
     if(r.status==="paid")gate=`<div class="verdict v-ok">Paid. Let this car in.</div><button class="okb" id="ci" style="width:100%">Check in ${esc(r.plate)}</button>`;
-    else if(r.status==="in")gate=`<div class="verdict v-in">Already checked in</div><p class="small muted">The pass is valid for all five days, so re entry is fine.</p>`;
+    else if(r.status==="in")gate=`<div class="verdict v-in">Already checked in</div><p class="small muted">The pass is valid for the whole meeting, so re entry is fine.</p>`;
     else gate=`<div class="verdict v-warn">Not paid yet</div>${CAN.markPaid(rl)?`<div class="row" style="justify-content:center"><button class="okb" data-pay="Cash">Paid cash</button><button class="ghost" data-pay="Card">Paid card</button><button class="ghost" data-pay="EFT">EFT received</button></div>`:`<p class="small muted">Take ${R(CONFIG.PARK_FEE)} and ask the host team to mark it paid.</p>`}`;
   }
   app(shell(`<article class="ticket">
