@@ -436,8 +436,8 @@ const PEOPLE=[...CLERGY.b.map(n=>({...splitClergy(n,"Bishop"),clergy:true,church
  ...CLERGY.pe.map(x=>({...splitClergy(x[0],"Rev."),clergy:true,church:"",district:x[1],conference:"M.M. Mokone Memorial Conference",desig:"Presiding Elder",label:"Presiding Elder · "+x[1]})),
  ...CLERGY.p.map(x=>({...splitClergy(x[0],"Rev."),clergy:true,church:x[1],district:x[2],conference:"M.M. Mokone Memorial Conference",desig:"Pastor",label:x[1]+" · "+x[2]})),
  ...MORE.map(x=>({title:x[0],names:x[1],surname:x[2],clergy:/^(Rev|Lic)/.test(x[0]),church:x[3],district:x[4],conference:x[5],desig:x[6],label:[x[3]||x[6],x[4],x[5].replace(" Conference",""),x[7]].filter(Boolean).join(" · ")})),
- ...CONF_OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:false,church:"",district:"",conference:o[5],desig:"Conference President",aux:o[4],label:o[3]})),
- ...OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:o[0].startsWith("Rev"),church:"",district:"19th Episcopal District",conference:"",desig:"Episcopal District Officer",aux:o[4],label:o[3]}))];
+ ...CONF_OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:false,church:"",district:"",conference:o[5],desig:o[3],aux:o[4],label:o[3]})),
+ ...OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:o[0].startsWith("Rev"),church:"",district:"19th Episcopal District",conference:"",desig:o[3],aux:o[4],label:o[3]}))];
 const CHURCHES=[...new Set([...PEOPLE.map(p=>p.church),...NOPASTOR.map(c=>c[0])].filter(Boolean))].sort();
 const DISTRICTS=[...new Set([...PEOPLE.map(p=>p.district),...NOPASTOR.map(c=>c[1])].filter(d=>d&&/District$/.test(d)))].sort();
 function titleOpts(){return ["Rev.","Rev. Dr.","Rev. Prof.","Bishop","Lic.","Sis.","Bro.","Dr.","Prof.","Mother"].map(t=>`<option>${t}</option>`).join("")}
