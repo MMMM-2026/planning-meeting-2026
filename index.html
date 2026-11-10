@@ -197,7 +197,7 @@ async function api(action,p={}){
       const dup=d.regs.find(x=>x.email.toLowerCase()===em||digits(x.mobile).slice(-9)===digits(p.mobile).slice(-9));
       if(dup)throw new Error("You are already registered. Use Find my ticket.");
       let code;do{code=mkCode("PM")}while(findR(code));
-      const rec={code,created:nowIso(),surname:p.surname,names:p.names,email:em,mobile:p.mobile,church:p.church,district:p.district,conference:p.conference,type:p.type,designation:p.designation,auxiliary:p.auxiliary,consent:!!p.consent};
+      const rec={code,created:nowIso(),title:p.title||"",surname:p.surname,names:p.names,email:em,mobile:p.mobile,church:p.church,district:p.district,conference:p.conference,type:p.type,designation:p.designation,auxiliary:p.auxiliary,consent:!!p.consent};
       d.regs.push(rec);save(d);return rec}
     case "getReg":{const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");return r}
     case "findReg":{const r=d.regs.find(x=>digits(x.mobile).slice(-9)===digits(p.mobile).slice(-9)&&x.surname.toLowerCase()===String(p.surname||"").toLowerCase().trim());if(!r)throw new Error("No registration matches that surname and mobile number.");return r}
