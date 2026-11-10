@@ -279,6 +279,7 @@ function viewRegister(){
     <h2>Register for the meeting</h2>
     <form id="rf" novalidate>
       ${finderHtml("rfind")}
+      <label for="rtitle">Title<select id="rtitle"><option value="">Choose</option>${titleOpts()}</select></label>
       <div class="grid2">
         <label for="surname">Surname<input id="surname" autocomplete="family-name"></label>
         <label for="names">Names<input id="names" autocomplete="given-name" placeholder="All your names"></label>
@@ -287,16 +288,18 @@ function viewRegister(){
         <label for="email">Email<input id="email" type="email" inputmode="email" autocomplete="email"></label>
         <label for="mobile">Mobile<input id="mobile" inputmode="tel" autocomplete="tel" placeholder="07X XXX XXXX"></label>
       </div>
-      <label for="church">Church<input id="church" placeholder="e.g. Nkosi Memorial AME Church"></label>
+      <label for="church">Church<input id="church" list="churchlist" placeholder="Start typing your church, or write: Not yet appointed"></label>
+      <datalist id="churchlist">${CHURCHES.map(c=>`<option>${esc(c)}</option>`).join("")}<option>Not yet appointed</option></datalist>
+      <datalist id="districtlist">${DISTRICTS.map(c=>`<option>${esc(c)}</option>`).join("")}</datalist>
       <div class="grid2">
-        <label for="district">District<input id="district" placeholder="e.g. Capital District"></label>
+        <label for="district">District<input id="district" list="districtlist" placeholder="Start typing your district"></label>
         <label for="conference">Conference<select id="conference">${confOpts("")}</select></label>
       </div>
             <div class="grid2">
         <label for="designation">Designation<input id="designation" list="desigs" placeholder="e.g. Pastor, Steward"></label>
-        <label for="auxiliary">Auxiliary<select id="auxiliary"><option value="">Choose</option><option>WMS</option><option>Lay Organization</option><option>Sons of Allen</option><option>ACE League</option><option>CMLF</option><option>RAYAC</option><option>YPD</option><option>Christian Education</option><option>None</option></select></label>
+        <label for="auxiliary">Auxiliary<select id="auxiliary"><option value="">Choose</option><option>WMS</option><option>Lay Organization</option><option>Sons of Allen</option><option>ACE League</option><option>CMLF</option><option>RAYAC</option><option>YPD</option><option>Christian Education</option><option>MSWAWO</option><option>Board of Examiners</option><option>None</option></select></label>
       </div>
-      <datalist id="desigs"><option>Bishop</option><option>Presiding Elder</option><option>Pastor</option><option>Local Elder</option><option>Local Deacon</option><option>Licentiate</option><option>Steward</option><option>Trustee</option><option>Class Leader</option><option>Auxiliary President</option><option>Member</option></datalist>
+      <datalist id="desigs"><option>Bishop</option><option>Presiding Elder</option><option>Pastor</option><option>Itinerant Elder, not yet appointed</option><option>Itinerant Deacon, not yet appointed</option><option>Supernumerary Preacher</option><option>Superannuated Preacher</option><option>Episcopal District Officer</option><option>Conference President</option><option>Life Member</option><option>PK (Preacher's Kid)</option><option>Local Elder</option><option>Local Deacon</option><option>Licentiate</option><option>Steward</option><option>Trustee</option><option>Class Leader</option><option>Auxiliary President</option><option>Member</option></datalist>
       <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Registration type</legend>
         <div class="types"><label><input type="radio" name="type" value="Delegate"> Delegate</label><label><input type="radio" name="type" value="Clergy"> Clergy</label><label><input type="radio" name="type" value="Observer"> Observer</label></div>
       </fieldset>
@@ -305,12 +308,12 @@ function viewRegister(){
       <button type="submit" id="rsub" class="brass">Register${CONFIG.REG_FEE?` · ${R(CONFIG.REG_FEE)}`:""}</button>
     </form>
   </section>`,"register"));
-  bindFinder("rfind",x=>{$("#surname").value=x.surname;$("#names").value=x.names;$("#church").value=x.church;$("#district").value=x.district;$("#conference").value=x.conference;$("#designation").value=x.desig;const c=document.querySelector('input[name="type"][value="Clergy"]');if(c)c.checked=true;$("#email").focus()});
+  bindFinder("rfind",x=>{setTitle("rtitle",x.title);if(x.aux)$("#auxiliary").value=x.aux;$("#surname").value=x.surname;$("#names").value=x.names;$("#church").value=x.church;$("#district").value=x.district;if(x.conference)$("#conference").value=x.conference;$("#designation").value=x.desig;const c=document.querySelector('input[name="type"][value="Clergy"]');if(c&&x.clergy)c.checked=true;$("#email").focus()});
   $("#rf").onsubmit=async e=>{
     e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#rerr");
     const t=document.querySelector('input[name="type"]:checked');
-    const data={surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:v("designation"),auxiliary:v("auxiliary"),type:t?t.value:"",consent:$("#consent").checked};
-    const miss=["surname","names","email","mobile","church","district","conference","designation","auxiliary"].filter(k=>!data[k]);
+    const data={title:v("rtitle"),surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:v("designation"),auxiliary:v("auxiliary"),type:t?t.value:"",consent:$("#consent").checked};
+    const miss=["rtitle","surname","names","email","mobile","church","district","conference","designation","auxiliary"].filter(k=>!data[k]);
     const fail=m=>{er.textContent=m;er.hidden=false};
     if(miss.length){fail("Please fill in every field.");$("#"+miss[0]).focus();return}
     if(!/^\S+@\S+\.\S+$/.test(data.email))return fail("Please check the email address.");
@@ -325,11 +328,11 @@ function viewRegister(){
 
 async function viewTicket(code){
   let r;try{r=await api("getReg",{code})}catch(e){app(shell(`<section class="panel"><h2>Not found</h2><p class="muted">${esc(e.message)}</p><a class="btn" href="#find">Find my ticket</a></section>`,""));return}
-  const title=r.type==="Clergy"?"Rev.":"";
+  const title=r.title||(r.type==="Clergy"?"Rev.":"");
   app(shell(`<article class="ticket">
     <div class="ticket-head"><div><span class="eyebrow">Registration</span><h2>${esc(CONFIG.EVENT)}</h2><p class="small" style="opacity:.8">${esc(CONFIG.DATES)} · ${esc(CONFIG.HOST)}</p></div><span class="status st-reg">${esc(r.type)}</span></div>
     <div class="ticket-body">
-      <div class="who"><strong>${esc(r.names)} ${esc(r.surname)}</strong><span class="muted small">${esc(r.designation)} · ${esc(r.church)}</span><br><span class="muted small">${esc(r.conference)} · ${esc(r.auxiliary)}</span></div>
+      <div class="who"><strong>${title?esc(title)+" ":""}${esc(r.names)} ${esc(r.surname)}</strong><span class="muted small">${esc(r.designation)} · ${esc(r.church)}</span><br><span class="muted small">${esc(r.conference)} · ${esc(r.auxiliary)}</span></div>
       <div class="qr" id="qr"></div>
       <div class="code">${esc(r.code)}</div>
       <p class="small muted">Show this at the registration desk. Save the link so you can open it again.</p>
@@ -386,7 +389,7 @@ async function viewParking(regCode){
     </form>
   </section>`,"parking"));
   if(pre.type==="Clergy")$("#ptitle").value="Rev.";
-  bindFinder("pfind",x=>{setTitle("ptitle",x.title);$("#pnames").value=x.names;$("#psurname").value=x.surname;$("#pchurch").value=x.church;$("#pdistrict").value=x.district;$("#pconf").value=x.conference;$("#pclergy").checked=true;$("#pphone").focus()});
+  bindFinder("pfind",x=>{setTitle("ptitle",x.title);$("#pnames").value=x.names;$("#psurname").value=x.surname;$("#pchurch").value=x.church;$("#pdistrict").value=x.district;if(x.conference)$("#pconf").value=x.conference;$("#pclergy").checked=!!x.clergy;$("#pphone").focus()});
   $("#pf").onsubmit=async e=>{e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#perr");
     const data={title:v("ptitle"),name:(v("pnames")+" "+v("psurname")).trim(),phone:v("pphone"),church:v("pchurch"),district:v("pdistrict"),conference:v("pconf"),plate:v("pplate"),car:v("pcar"),clergy:$("#pclergy").checked,reg:pre.code||""};
     const miss=["pnames","psurname","pphone","pchurch","pdistrict","pconf","pplate","pcar"].filter(k=>!v(k));
@@ -406,17 +409,32 @@ const CLERGY={"b": ["Wilfred Jacobus Messiah"], "pe": [["Mandisi Albert Mexico",
 const CLERGY_ALL=[["Bishop",...CLERGY.b],...CLERGY.pe.map(x=>["Rev.",x[0]]),...CLERGY.p.map(x=>["Rev.",x[0]])];
 const onList=n=>{const k=String(n||"").toLowerCase().replace(/[^a-z]/g,"");return !!k&&CLERGY_ALL.some(x=>x[1].toLowerCase().replace(/[^a-z]/g,"")===k)};
 function splitClergy(full,base){let t=base;let n=full.trim();const m=n.match(/^(Dr\.?|Prof\.?)\s+/i);if(m){t=base+" "+(m[1].toLowerCase().startsWith("p")?"Prof.":"Dr.");n=n.slice(m[0].length)}const w=n.split(/\s+/);return{title:t,surname:w.pop(),names:w.join(" ")}}
-const PEOPLE=[...CLERGY.b.map(n=>({...splitClergy(n,"Bishop"),church:"",district:"19th Episcopal District",conference:"M.M. Mokone Memorial Conference",desig:"Bishop",label:"Bishop"})),
- ...CLERGY.pe.map(x=>({...splitClergy(x[0],"Rev."),church:"",district:x[1],conference:"M.M. Mokone Memorial Conference",desig:"Presiding Elder",label:"Presiding Elder · "+x[1]})),
- ...CLERGY.p.map(x=>({...splitClergy(x[0],"Rev."),church:x[1],district:x[2],conference:"M.M. Mokone Memorial Conference",desig:"Pastor",label:x[1]+" · "+x[2]}))];
-function titleOpts(){return ["Rev.","Rev. Dr.","Rev. Prof.","Bishop","Sis.","Bro.","Dr.","Mother"].map(t=>`<option>${t}</option>`).join("")}
+/* 19th Episcopal District officers: [title, names, surname, office, auxiliary] */
+const OFFICERS=[
+  ["Sis.","Reshoketswe","Mosuwe","19th Episcopal District WMS President","WMS"],
+  ["Sis.","Jeanette Nonosi","Mokoena","19th Episcopal District CMLF President","CMLF"],
+  ["Rev.","Teboho Gordon","Klaas","19th Episcopal District Dean of the Board of Examiners","Board of Examiners"],
+  ["Rev.","Motseko Raymond","Potse","19th Episcopal District ACE League President","ACE League"],
+  ["Bro.","Rearabetswe","Mabuya","19th Episcopal District YPD President","YPD"],
+  ["Sis.","Mosima","Tambani","19th Episcopal District YPD Director","YPD"],
+  ["Prof.","Agnes","Tshweu","19th Episcopal District MSWAWO President","MSWAWO"],
+  ["Dr.","Lerato","Lekomanyane","19th Episcopal District RAYAC","RAYAC"],
+  ["Rev.","Lekubela Simon","Moobi","19th Episcopal District Director of Christian Education","Christian Education"]
+];
+const PEOPLE=[...CLERGY.b.map(n=>({...splitClergy(n,"Bishop"),clergy:true,church:"",district:"19th Episcopal District",conference:"M.M. Mokone Memorial Conference",desig:"Bishop",label:"Bishop"})),
+ ...CLERGY.pe.map(x=>({...splitClergy(x[0],"Rev."),clergy:true,church:"",district:x[1],conference:"M.M. Mokone Memorial Conference",desig:"Presiding Elder",label:"Presiding Elder · "+x[1]})),
+ ...CLERGY.p.map(x=>({...splitClergy(x[0],"Rev."),clergy:true,church:x[1],district:x[2],conference:"M.M. Mokone Memorial Conference",desig:"Pastor",label:x[1]+" · "+x[2]})),
+ ...OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:o[0].startsWith("Rev"),church:"",district:"19th Episcopal District",conference:"",desig:"Episcopal District Officer",aux:o[4],label:o[3]}))];
+const CHURCHES=[...new Set(PEOPLE.map(p=>p.church).filter(Boolean))].sort();
+const DISTRICTS=[...new Set(PEOPLE.map(p=>p.district).filter(Boolean))].sort();
+function titleOpts(){return ["Rev.","Rev. Dr.","Rev. Prof.","Bishop","Sis.","Bro.","Dr.","Prof.","Mother"].map(t=>`<option>${t}</option>`).join("")}
 function setTitle(id,t){const el=$("#"+id);if(![...el.options].some(o=>o.value===t))el.insertAdjacentHTML("beforeend",`<option>${esc(t)}</option>`);el.value=t}
-function finderHtml(id){return `<div style="display:flex;flex-direction:column;gap:6px;background:var(--brass-soft);border-radius:12px;padding:12px"><label for="${id}">Bishop, Presiding Elder or Pastor? Find yourself<input id="${id}" autocomplete="off" placeholder="Type your name or surname, e.g. Moremi"></label><div id="${id}r" style="display:flex;flex-direction:column;gap:6px"></div><span class="small muted">Your details fill in by themselves. Everyone else, please fill in the form below.</span></div>`}
+function finderHtml(id){return `<div style="display:flex;flex-direction:column;gap:6px;background:var(--brass-soft);border-radius:12px;padding:12px"><label for="${id}">Clergy or District officer? Find yourself<input id="${id}" autocomplete="off" placeholder="Type your name or surname, e.g. Moremi"></label><div id="${id}r" style="display:flex;flex-direction:column;gap:6px"></div><span class="small muted">Your details fill in by themselves. Everyone else, please fill in the form below.</span></div>`}
 function bindFinder(id,pick){const inp=$("#"+id),box=$("#"+id+"r");inp.oninput=()=>{const q=inp.value.toLowerCase().trim().split(/\s+/).filter(Boolean);if(!q.length||q.join("").length<2){box.innerHTML="";return}
   const hits=PEOPLE.filter(p=>{const w=(p.names+" "+p.surname).toLowerCase().split(/\s+/);return q.every(t=>w.some(x=>x.startsWith(t)))}).slice(0,6);
   box.innerHTML=hits.length?hits.map((p,k)=>`<button type="button" class="ghost" data-k="${k}" style="text-align:left;padding:10px 12px"><b>${esc(p.title)} ${esc(p.names)} ${esc(p.surname)}</b><br><span class="small muted">${esc(p.label)}</span></button>`).join(""):'<span class="small muted">No match. Please fill in the form below.</span>';
   box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{const p=hits[+b.dataset.k];pick(p);box.innerHTML="";inp.value=p.title+" "+p.names+" "+p.surname;toast("Details filled in")})}}
-const onListName=n=>PEOPLE.some(p=>(p.names+" "+p.surname).toLowerCase().replace(/[^a-z]/g,"")===String(n||"").toLowerCase().replace(/[^a-z]/g,""));
+const onListName=n=>PEOPLE.some(p=>p.clergy&&(p.names+" "+p.surname).toLowerCase().replace(/[^a-z]/g,"")===String(n||"").toLowerCase().replace(/[^a-z]/g,""));
 const CONFS=["Natal Conference","East Conference","Orangia Conference","West Conference","M.M. Mokone Memorial Conference","Other"];
 function confOpts(sel){return '<option value="">Choose your conference</option>'+CONFS.map(c=>`<option ${c===sel?"selected":""}>${esc(c)}</option>`).join("")}
 function waNum(p){const d=digits(p);return d.startsWith("0")?"27"+d.slice(1):d}
