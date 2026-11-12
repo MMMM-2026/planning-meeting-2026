@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400" role="img" aria-label="Bezalel Works"><title>Bezalel Works</title>
+<circle cx="200" cy="200" r="190" fill="#0D0C10" stroke="#D9A93B" stroke-width="16"/>
+<g transform="translate(200,200) scale(1.25) translate(-200,-212)"><g transform="translate(100,92)">
+<path d="M78 36 V164 M70 36 H118 C142 36 152 52 152 68 C152 86 140 98 118 98 H78 M78 98 H124 C150 98 160 114 160 131 C160 150 146 164 122 164 H70" fill="none" stroke="#D9A93B" stroke-width="24"/>
+<polyline points="26,108 60,178 100,126 140,178 174,108" fill="none" stroke="#0D0C10" stroke-width="34" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="26,108 60,178 100,126 140,178 174,108" fill="none" stroke="#D6453C" stroke-width="20" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="66" y="128" width="24" height="48" fill="#D9A93B"/><path d="M142 105 C155 112 160 122 160 131 C160 144 154 155 142 160" fill="none" stroke="#0D0C10" stroke-width="34"/><path d="M126 98 C150 99 160 114 160 131 C160 144 154 155 142 160" fill="none" stroke="#D9A93B" stroke-width="24"/></g></g>
+</svg>
