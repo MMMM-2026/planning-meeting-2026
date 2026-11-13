@@ -118,6 +118,20 @@ td button{padding:6px 10px;font-size:12px;border-radius:7px}
 .bar{display:grid;grid-template-columns:minmax(0,1.2fr) 2fr auto;gap:10px;align-items:center;font-size:13px}
 .bar .track{height:8px;background:var(--line);border-radius:5px;overflow:hidden}.bar .track i{display:block;height:100%;background:var(--navy)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:20}
+.dslots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dslot{border:1px dashed var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--muted)}
+.dslot b{color:var(--ink);font-size:14px}.dslot .dmark{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:13px}
+.dslot.on{border:1px solid var(--brass);background:var(--brass-soft);color:var(--ink)}.dslot.on .dmark{background:linear-gradient(180deg,#f6dc98,#c79a3a);border-color:#c79a3a;color:#2a0b45;font-weight:700}
+.deleg.done{border-top-color:var(--ok)}
+.btn.wa{background:#1f7a4d!important;box-shadow:none;color:#fff}
+.feebox{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left}.feebox b{display:block;font-family:var(--f-display);font-size:24px}
+.feebox.paid{border-color:var(--ok)}
+.pop{position:fixed;inset:0;background:rgba(18,6,30,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:30}
+.popc{background:var(--surface);border-radius:18px;border-top:4px solid var(--brass);max-width:440px;width:100%;max-height:90vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.popc .panel{border:0;padding:0}
+.live{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}.live b{display:block;font-family:var(--f-display);font-size:30px;line-height:1.1;color:var(--navy)}.live span{font-size:12px;color:var(--muted)}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:13px;align-items:center}.crow .meter{grid-column:1/-1}
+.dtbl td,.dtbl th{white-space:normal}
 .blessing{font-family:var(--f-display);font-style:italic;color:var(--muted);font-size:16px}
 .doc{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line)}.doc:first-of-type{border-top:0}.doc>div:first-child{display:flex;flex-direction:column;gap:2px}.doc .row button,.doc .row .btn{padding:7px 12px;font-size:14px;width:auto;margin:0}
 #docov{position:fixed;inset:0;z-index:50;background:#0d1322;display:flex;flex-direction:column}#docov .dov-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;color:#fff;background:#151c2e}#docov .dov-bar>div:first-child{display:flex;flex-direction:column;min-width:0}#docov .dov-bar b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#docov .dov-bar .btn,#docov .dov-bar button{padding:7px 12px;font-size:14px;width:auto;margin:0;color:#fff !important;border-color:rgba(255,255,255,.4);background:transparent}#docov iframe{flex:1;border:0;width:100%;background:#fff}
@@ -132,18 +146,20 @@ td button{padding:6px 10px;font-size:12px;border-radius:7px}
 const CONFIG={
   API_URL:"https://script.google.com/macros/s/AKfycbzEC7iKmpth4-49of8HKGMdwk__d1zkV6y9cEUZESVeUu-_bNqoIkCc_VPC1dhYlgvC/exec",
   SITE_URL:"",
-  EVENT:"19th Episcopal District Planning Meeting",
+  EVENT:"19th Episcopal District Christian Education Congress and Planning Meeting",
   APP:"Planning Meeting 2026",
   HOST:"Ebenezer AME Church",
   HOST_PLACE:"Atteridgeville",
   DATES:"2 to 6 December 2026",
   PROGRAMME:[
     {day:"Wednesday 2 December",what:"19th Episcopal District Women's Missionary Society Convention"},
-    {day:"Thursday 3 to Sunday 6 December",what:"Planning Meeting and BCE Congress, closing on Sunday"}
+    {day:"Thursday 3 to Sunday 6 December",what:"Christian Education Congress and Planning Meeting, closing on Sunday"}
   ],
   THEME:"Reviving the Connection: Exceedingly, Abundantly Above All We Can Ask or Think",
   EDIT_LIVE:true,        // turn on once the Apps Script has updateReg and fixReg
-  REG_FEE:0,             // registration fee in rand; 0 = no fee
+  REG_FEE:650,           // registration fee in rand per person; 0 = no fee
+  REG_BANK:null,         // fill in when the Bishop's office gives the account, e.g. {bank:"",accountName:"",accountNumber:"",branchCode:""}
+  DELEG_LIVE:false,      // turn on once the Apps Script saves the church role, fee and church key
   PARK_FEE:50,
   BAYS:[
     {id:"P",name:"Bay 1 · Bishops, Presiding Elders and Pastors",short:"Clergy bay",cap:0,clergy:true},
@@ -216,11 +232,14 @@ async function api(action,p={}){
       const dup=d.regs.find(x=>x.email.toLowerCase()===em||digits(x.mobile).slice(-9)===digits(p.mobile).slice(-9));
       if(dup)throw new Error("You are already registered. Use Find my ticket.");
       let code;do{code=mkCode("PM")}while(findR(code));
-      const rec={code,created:nowIso(),title:p.title||"",surname:p.surname,names:p.names,email:em,mobile:p.mobile,church:p.church,district:p.district,conference:p.conference,type:p.type,designation:p.designation,auxiliary:p.auxiliary,consent:!!p.consent};
+      const rec={code,created:nowIso(),role:p.role||"",churchKey:p.churchKey||"",fee:"",title:p.title||"",surname:p.surname,names:p.names,email:em,mobile:p.mobile,church:p.church,district:p.district,conference:p.conference,type:p.type,designation:p.designation,auxiliary:p.auxiliary,consent:!!p.consent};
       d.regs.push(rec);save(d);return rec}
     case "getRegFull":{const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");const ok=p.pin?!!(pinRole(p.pin)&&CAN.regDesk(pinRole(p.pin))):(digits(p.mobile).length>=9&&digits(p.mobile).slice(-9)===digits(r.mobile).slice(-9));if(!ok)throw new Error("That mobile number does not match this registration.");return r}
     case "editReg":{need(CAN.regDesk);const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");Object.assign(r,cleanEdit(p.changes),{edited:nowIso(),editedBy:"desk"});save(d);return r}
     case "fixReg":{const r=findR(p.code);if(!r||digits(r.mobile).slice(-9)!==digits(p.mobile).slice(-9))throw new Error("That mobile number does not match this registration.");Object.assign(r,cleanEdit(p.changes),{edited:nowIso(),editedBy:"self"});save(d);return r}
+    case "regFee":{need(CAN.regDesk);const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");r.fee=p.paid?"paid":"";r.feeMethod=p.paid?(p.method||"EFT"):"";r.feePaidAt=p.paid?nowIso():"";save(d);return r}
+    case "churchStatus":return churchStatusOf(d.regs,p.key)
+    case "publicStats":return publicStatsOf(d.regs)
     case "getReg":{const r=findR(p.code);if(!r)throw new Error("No registration found with that code.");return r}
     case "findReg":{const r=d.regs.find(x=>digits(x.mobile).slice(-9)===digits(p.mobile).slice(-9)&&x.surname.toLowerCase()===String(p.surname||"").toLowerCase().trim());if(!r)throw new Error("No registration matches that surname and mobile number.");return r}
     case "bayStats":{return CONFIG.BAYS.map(b=>({id:b.id,cap:b.cap,used:d.park.filter(x=>x.bay===b.id&&x.status!=="cancel").length}))}
@@ -289,6 +308,7 @@ function viewHome(){
     <p>One app for the whole meeting. Register once, book your parking, and follow the worship from your phone.</p>
     <p class="small muted"><em>${esc(CONFIG.THEME)}</em> · Ephesians 3:20 to 21</p>
   </section>
+  <div id="livebox"></div>
   <section class="panel"><h3>The week at Ebenezer</h3>
     <div class="prog">${CONFIG.PROGRAMME.map(x=>`<div class="prog-row"><b>${esc(x.day)}</b><span>${esc(x.what)}</span></div>`).join("")}</div>
   </section>
@@ -300,7 +320,16 @@ function viewHome(){
     <a class="room" href="#presentations"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg></span><b>Presentations</b><span>Slides shown at the meeting</span></a>
     <a class="room" href="#find"><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a3 3 0 0 0 0 6v3h18v-3a3 3 0 0 0 0-6V6H3z"/><path d="M13 6v12" stroke-dasharray="2 2"/></svg></span><b>Find my ticket</b><span>Open your registration or parking pass</span></a>
   </div>`,"home"));
+  liveBoard();
 }
+
+async function liveBoard(){const box=$("#livebox");if(!box||!delegOn())return;let st;try{st=await api("publicStats")}catch(e){return}if(!$("#livebox"))return;
+  const confs=["Natal Conference","East Conference","Orangia Conference","West Conference","M.M. Mokone Memorial Conference"];
+  const known=c=>KNOWN.filter(k=>k.conference===c).length;let churches=0,complete=0;Object.values(st.conf).forEach(x=>{churches+=x.churches;complete+=x.complete});
+  box.innerHTML=`<section class="panel"><span class="eyebrow" style="color:var(--brass)">Registration so far</span>
+    <div class="live"><div><b>${st.total}</b><span>people registered</span></div><div><b>${churches}</b><span>churches represented</span></div><div><b>${complete}</b><span>delegations complete</span></div></div>
+    ${confs.map(c=>{const x=st.conf[c]||{people:0,churches:0,complete:0},k=known(c);return `<div class="crow"><b>${esc(c.replace(" Conference",""))}</b><span class="muted">${x.people} registered · ${x.churches} of ${k} churches</span><div class="meter"><i style="width:${k?Math.min(100,Math.round(x.churches/k*100)):0}%"></i></div></div>`}).join("")}
+    <a class="btn brass" href="#register">Register now</a></section>`}
 
 /* ============ REGISTRATION ============ */
 function viewRegister(){
@@ -332,29 +361,45 @@ function viewRegister(){
         <div class="types aux"><label><input type="checkbox" name="aux" value="WMS"> WMS</label><label><input type="checkbox" name="aux" value="Lay Organization"> Lay Organization</label><label><input type="checkbox" name="aux" value="Sons of Allen"> Sons of Allen</label><label><input type="checkbox" name="aux" value="ACE League"> ACE League</label><label><input type="checkbox" name="aux" value="CMLF"> CMLF</label><label><input type="checkbox" name="aux" value="RAYAC"> RAYAC</label><label><input type="checkbox" name="aux" value="YPD"> YPD</label><label><input type="checkbox" name="aux" value="MSWAWO and PKs"> MSWAWO and PKs</label></div>
       </fieldset>
       
+      ${delegOn()?`<div id="cstat"></div>
+      <fieldset id="rolefs" style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Representing your church as <span class="hint">· each church sends at least a Pastor, an Adult, a Youth and a Christian Education Director</span></legend>
+        <div class="types aux" id="roles">${ROLE_OPTS.map(o=>`<label${o.id==="Additional"||o.id==="None"?' style="grid-column:1/-1"':""}><input type="radio" name="crole" value="${o.id}"> <span>${esc(o.label)}<em class="rneed" data-r="${o.id}"></em></span></label>`).join("")}</div>
+      </fieldset>`:""}
       <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Registration type</legend>
         <div class="types"><label><input type="radio" name="type" value="Delegate"> Delegate</label><label><input type="radio" name="type" value="Clergy"> Clergy</label><label><input type="radio" name="type" value="Observer"> Observer</label></div>
       </fieldset>
       <label class="check" for="consent"><input type="checkbox" id="consent"> <span>I agree that the 19th Episcopal District may keep my details and use my email and mobile to communicate with me about this meeting and the work of the District after the meeting.</span></label>
       <p id="rerr" class="err" hidden></p>
+      ${CONFIG.REG_FEE?`<p class="small muted">The registration fee for the Congress and Planning Meeting is <b>${R(CONFIG.REG_FEE)}</b> per person. Your ticket shows how to pay.</p>`:""}
       <button type="submit" id="rsub" class="brass">Register${CONFIG.REG_FEE?` · ${R(CONFIG.REG_FEE)}`:""}</button>
     </form>
   </section>`,"register"));
   $("#designation").onchange=e=>{const o=$("#desigOther");o.hidden=e.target.value!=="__other";if(!o.hidden)o.focus()};
-  bindFinder("rfind",x=>{setTitle("rtitle",x.title);document.querySelectorAll('input[name="aux"]').forEach(c=>c.checked=c.value===x.aux);$("#surname").value=x.surname;$("#names").value=x.names;$("#church").value=x.church;$("#district").value=x.district;if(x.conference)$("#conference").value=x.conference;setTitle("designation",x.desig);const c=document.querySelector('input[name="type"][value="Clergy"]');if(c&&x.clergy)c.checked=true;$("#email").focus()});
+  bindFinder("rfind",x=>{setTitle("rtitle",x.title);document.querySelectorAll('input[name="aux"]').forEach(c=>c.checked=c.value===x.aux);$("#surname").value=x.surname;$("#names").value=x.names;$("#church").value=x.church;$("#district").value=x.district;if(x.conference)$("#conference").value=x.conference;setTitle("designation",x.desig);const c=document.querySelector('input[name="type"][value="Clergy"]');if(delegOn()){if(/^Pastor/.test(x.desig||""))setRole("Pastor");else if(!x.church||/Presiding Elder|President|Officer|Supervisor|Director|Dean|Editor|Superannuated|Supernumerary/.test(x.desig||""))setRole("None")}cfill();if(c&&x.clergy)c.checked=true;$("#email").focus()});
+  let cst=null,ctimer=null;
+  const cfill=async()=>{const box=$("#cstat");if(!box)return;const c=canonChurch({church:$("#church").value,district:$("#district").value,conference:$("#conference").value});
+    document.querySelectorAll(".rneed").forEach(e=>e.textContent="");if(!c){box.innerHTML="";cst=null;return}
+    try{cst=await api("churchStatus",{key:c.key})}catch(e){box.innerHTML="";return}
+    const miss=DELEG.filter(d=>!cst.have[d.id]);
+    box.innerHTML=`<div class="note"><b>${esc(c.church)}</b>${c.district?", "+esc(c.district):""}: ${cst.total?`${cst.total} already registered.`:"you are the first from your church."} ${miss.length?`Still needed: ${esc(listJoin(miss.map(d=>d.label)))}.`:"The delegation is complete. You are welcome as an additional member."}</div>`;
+    DELEG.forEach(d=>{const em=document.querySelector(`.rneed[data-r="${d.id}"]`);if(em)em.textContent=cst.have[d.id]?" · registered":" · still needed"})};
+  ["church","district","conference"].forEach(id=>{const el=$("#"+id);if(el)el.addEventListener("change",()=>{clearTimeout(ctimer);ctimer=setTimeout(cfill,250)})});
+  const setRole=id=>{const el=document.querySelector(`input[name="crole"][value="${id}"]`);if(el)el.checked=true};
   $("#rf").onsubmit=async e=>{
     e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#rerr");
     const t=document.querySelector('input[name="type"]:checked');
     const data={title:v("rtitle"),surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:$("#designation").value==="__other"?v("desigOther"):v("designation"),auxiliary:[...document.querySelectorAll('input[name="aux"]:checked')].map(c=>c.value).join(", "),type:t?t.value:"",consent:$("#consent").checked};
-    const miss=["title","surname","names","email","mobile","church","district","conference","designation"].filter(k=>!data[k]);
+    const roNone=delegOn()&&(document.querySelector('input[name="crole"]:checked')||{}).value==="None";
+    const miss=["title","surname","names","email","mobile",...(roNone?[]:["church","district"]),"conference","designation"].filter(k=>!data[k]);
     const fail=m=>{er.textContent=m;er.hidden=false};
     if(miss.length){fail("Please fill in every field.");$("#"+(miss[0]==="title"?"rtitle":miss[0])).focus();return}
     if(!/^\S+@\S+\.\S+$/.test(data.email))return fail("Please check the email address.");
     if(digits(data.mobile).length<9)return fail("Please check the mobile number.");
     if(!data.type)return fail("Please choose a registration type.");
+    if(delegOn()){const ro=document.querySelector('input[name="crole"]:checked');if(!ro)return fail("Please choose how you are representing your church.");data.role=ro.value;const c=canonChurch(data);data.churchKey=c?c.key:""}
     if(!data.consent)return fail("Please tick the box to agree to how your details are used.");
     er.hidden=true;$("#rsub").disabled=true;$("#rsub").textContent="Registering...";
-    try{const r=await api("register",data);location.hash="ticket-"+r.code;toast("You are registered")}
+    try{const r=await api("register",data);sess.set("pm_new",r.code);location.hash="ticket-"+r.code;toast("You are registered")}
     catch(x){fail(x.message);$("#rsub").disabled=false;$("#rsub").textContent="Register"}
   };
 }
@@ -369,6 +414,7 @@ async function viewTicket(code){
       <div class="qr" id="qr"></div>
       <div class="code">${esc(r.code)}</div>
       <p class="small muted">Show this at the registration desk. Save the link so you can open it again.</p>
+      ${feeBlock(r)}
       <div class="row" style="justify-content:center"><button class="ghost" data-copy="${esc(base()+"#ticket-"+r.code)}">Copy ticket link</button>${canEdit()?`<a class="btn ghost" href="#edit-${esc(r.code)}">Correct my details</a>`:""}</div>
     </div>
     <div class="perf"></div>
@@ -384,8 +430,10 @@ async function viewTicket(code){
       <a class="btn" href="#card-${esc(r.code)}">Make my status card</a>
       <p class="blessing">We look forward to welcoming you. God go with you.</p>
     </div>
-  </article>`,""));
+  </article><div id="dslot"></div>`,""));
   qr($("#qr"),base()+"#ticket-"+r.code);
+  const dh=await delegPanel(r);const ds=$("#dslot");if(ds&&dh){ds.outerHTML=dh}
+  if(sess.get("pm_new")===r.code){sess.del("pm_new");popReminder(r,dh)}
 }
 
 /* ============ PARKING ============ */
@@ -529,6 +577,97 @@ function viewWorship(){
     ${CONFIG.WORSHIP_URL?`<a class="btn" href="${esc(CONFIG.WORSHIP_URL)}">Open the order of worship</a>`:`<p>The order of worship for each session will appear here closer to the meeting, with the hymns, readings and responses on your phone.</p><p class="small muted">Check back in the week of the meeting.</p>`}
   </section>`,"worship"));
 }
+
+/* ============ CHURCH DELEGATIONS ============ */
+const DELEG=[{id:"Pastor",label:"Pastor"},{id:"Adult",label:"Adult delegate"},{id:"Youth",label:"Youth delegate"},{id:"CE Director",label:"Christian Education Director"}];
+const ROLE_OPTS=[...DELEG,{id:"Additional",label:"Another member of my church's delegation"},{id:"None",label:"Not representing a local church (Presiding Elder, officer or observer)"}];
+const roleLabel=id=>(ROLE_OPTS.find(r=>r.id===id)||{label:id||"Not given"}).label;
+const delegOn=()=>!LIVE||CONFIG.DELEG_LIVE;
+const nrm=s=>String(s||"").toLowerCase().replace(/\ba\.m\.e\.?/g," ").replace(/\bame\b/g," ").replace(/\bchurch\b/g," ").replace(/\bmt\b\.?/g,"mount ").replace(/[^a-z0-9]+/g," ").trim();
+const nrmD=s=>nrm(s).replace(/\bdistrict\b/g," ").replace(/\s+/g," ").trim();
+const roleOf=r=>r.role||(/pastor/i.test(r.designation||"")&&!/presiding/i.test(r.designation||"")?"Pastor":"");
+const KNOWN=(()=>{const out=[],seen=new Set();
+  const add=(c,d,cf)=>{if(!c||!cf)return;const parts=/ and /.test(c)&&/ AME Church$/.test(c)?c.replace(/ AME Church$/,"").split(" and ").map(x=>x.trim()+" AME Church"):[c];
+    parts.forEach(ch=>{const k=cf+"|"+nrmD(d)+"|"+nrm(ch);if(!seen.has(k)){seen.add(k);out.push({church:ch,district:d,conference:cf})}})};
+  CLERGY.p.forEach(x=>add(x[1],x[2],"M.M. Mokone Memorial Conference"));
+  MORE.forEach(x=>{if(x[6]!=="Presiding Elder")add(x[3],x[4],x[5])});
+  NOPASTOR.forEach(x=>add(x[0],x[1],x[2]));
+  [["Phillimons Temple AME Church","Midlands District","Natal Conference"],["Umlazi Grace AME Church","Durban District","Natal Conference"],["HW Henning AME Church","Bizana District","Natal Conference"]].forEach(x=>add(...x));
+  MORE.forEach(x=>{if(x[6]==="Presiding Elder"&&x[3]&&!out.some(k=>k.conference===x[5]&&nrm(k.church)===nrm(x[3])))add(x[3],x[4],x[5])});
+  return out})();
+function canonChurch(r){const cf=r.conference||"",nc=nrm(r.church);if(!nc||!cf)return null;
+  const c=KNOWN.filter(k=>k.conference===cf&&nrm(k.church)===nc);
+  const k=c.length===1?c[0]:c.find(k=>nrmD(k.district)===nrmD(r.district));
+  const church=k?k.church:r.church,district=k?k.district:r.district;
+  return{key:cf+"|"+nrmD(district)+"|"+nrm(church),church,district,conference:cf,known:!!k}}
+const keyOf=r=>r.churchKey||(canonChurch(r)||{}).key||"";
+function churchStatusOf(regs,key){const have={};let total=0;regs.forEach(r=>{if(keyOf(r)!==key)return;const ro=roleOf(r);if(ro==="None")return;total++;if(ro)have[ro]=(have[ro]||0)+1});return{total,have}}
+function publicStatsOf(regs){const conf={},keys=new Map();regs.forEach(r=>{if(r.sample)return;const c=r.conference||"Other";conf[c]=conf[c]||{people:0,churches:0,complete:0};conf[c].people++;const ro=roleOf(r);if(ro==="None")return;const k=keyOf(r);if(!k)return;if(!keys.has(k))keys.set(k,{conf:c,have:{}});if(ro)keys.get(k).have[ro]=1});
+  keys.forEach(g=>{conf[g.conf].churches++;if(DELEG.every(d=>g.have[d.id]))conf[g.conf].complete++});
+  return{total:regs.filter(r=>!r.sample).length,conf}}
+function delegations(regs,withKnown){const map=new Map();
+  if(withKnown)KNOWN.forEach(k=>map.set(k.conference+"|"+nrmD(k.district)+"|"+nrm(k.church),{church:k.church,district:k.district,conference:k.conference,people:[],have:{}}));
+  regs.forEach(r=>{const ro=roleOf(r);if(ro==="None")return;const c=canonChurch(r);if(!c)return;let g=map.get(c.key);if(!g){g={church:c.church,district:c.district,conference:c.conference,people:[],have:{}};map.set(c.key,g)}g.people.push(r);const k=ro||"Unassigned";g.have[k]=(g.have[k]||0)+1});
+  return[...map.values()].map(g=>({...g,missing:DELEG.filter(d=>!g.have[d.id]).map(d=>d.id),complete:DELEG.every(d=>g.have[d.id])}))
+    .sort((a,b)=>(a.conference+"|"+a.district+"|"+a.church).localeCompare(b.conference+"|"+b.district+"|"+b.church))}
+const listJoin=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
+function delegSlots(have){return `<div class="dslots">${DELEG.map(d=>`<div class="dslot ${have[d.id]?"on":""}"><span class="dmark" aria-hidden="true">${have[d.id]?"&#10003;":""}</span><b>${esc(d.label)}</b><span>${have[d.id]?"Registered":"Still needed"}</span></div>`).join("")}</div>`}
+function inviteText(r,missing){const need=listJoin(missing.map(m=>roleLabel(m).replace(" delegate"," delegate")));
+  return `I have registered for the ${CONFIG.EVENT}, ${CONFIG.DATES}, at ${CONFIG.HOST}, ${CONFIG.HOST_PLACE}.\n\nEach church must send at least a Pastor, an Adult delegate, a Youth delegate and a Christian Education Director. ${r.church} still needs: ${need}.\n\nRegister here: ${base()}#register`}
+function feeBlock(r){if(!CONFIG.REG_FEE)return"";const paid=r.fee==="paid";
+  return `<div class="feebox ${paid?"paid":""}"><div><span class="eyebrow" style="color:inherit">Registration fee</span><b>${R(CONFIG.REG_FEE)}</b></div><span class="status ${paid?"st-paid":"st-pending"}">${paid?"Paid":"Awaiting payment"}</span></div>
+  ${paid?"":CONFIG.REG_BANK?`<dl class="pay"><dt>Bank</dt><dd>${esc(CONFIG.REG_BANK.bank)}</dd><dt>Account name</dt><dd>${esc(CONFIG.REG_BANK.accountName)}</dd><dt>Account no.</dt><dd class="mono">${esc(CONFIG.REG_BANK.accountNumber)}</dd><dt>Branch code</dt><dd class="mono">${esc(CONFIG.REG_BANK.branchCode)}</dd><dt>Reference</dt><dd class="mono">${esc(r.code)}</dd></dl>`:`<p class="small muted">Payment details will follow in the letter from the Bishop's office. Use <b class="mono">${esc(r.code)}</b> as your reference when you pay.</p>`}`}
+async function delegPanel(r){if(!delegOn()||roleOf(r)==="None")return"";const key=r.churchKey||keyOf(r);if(!key)return"";
+  let st;try{st=await api("churchStatus",{key})}catch(e){return""}
+  const missing=DELEG.filter(d=>!st.have[d.id]).map(d=>d.id);
+  return `<section class="panel deleg ${missing.length?"":"done"}" id="delegp"><span class="eyebrow" style="color:var(--brass)">Your church's delegation</span><h3>${esc(r.church)}</h3>
+    <p class="small muted">${st.total} registered so far. Each church sends at least a Pastor, an Adult, a Youth and a Christian Education Director.</p>${delegSlots(st.have)}
+    ${missing.length?`<p><b>${missing.length} still to register:</b> ${esc(listJoin(missing.map(roleLabel)))}.</p><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(inviteText(r,missing))}">Invite them on WhatsApp</a>`:`<p class="blessing">Your church's delegation is complete. Thank you for leading the way.</p>`}</section>`}
+function popReminder(r,html){if(!html||!/still to register/.test(html))return;const dlg=document.createElement("div");dlg.className="pop";dlg.setAttribute("role","dialog");dlg.setAttribute("aria-modal","true");
+  dlg.innerHTML=`<div class="popc"><img src="crest.png" alt="" style="width:64px;align-self:center"><h2 style="text-align:center">You are registered</h2><p style="text-align:center">Now help your church complete its delegation.</p>${html.replace('id="delegp"','')}<button class="ghost" id="popx">Later</button></div>`;
+  document.querySelectorAll(".pop").forEach(x=>x.remove());document.body.appendChild(dlg);window.addEventListener("hashchange",()=>dlg.remove(),{once:true});dlg.querySelector("#popx").onclick=()=>dlg.remove();dlg.onclick=e=>{if(e.target===dlg)dlg.remove()}}
+
+/* ============ EXCEL WORKBOOK ============ */
+let _xl=null;function loadExcel(){return _xl||(_xl=new Promise((ok,no)=>{const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";s.onload=()=>ok(window.ExcelJS);s.onerror=()=>{_xl=null;no(new Error("Could not load the Excel tool. Check your connection and try again."))};document.head.appendChild(s)}))}
+async function excelWorkbook(all){
+  const ExcelJS=await loadExcel();const wb=new ExcelJS.Workbook();wb.creator="Planning Meeting 2026";wb.created=new Date();
+  const regs=all.filter(r=>!r.sample);const PUR="FF3B145C",GOLD="FFC79A3A",LAV="FFF5F0F9",GRN="FFDFF2E8",AMB="FFFBEFD6",GRY="FFF1EFE8";
+  const confs=["Natal Conference","East Conference","Orangia Conference","West Conference","M.M. Mokone Memorial Conference"];
+  const confOrder=c=>{const i=confs.indexOf(c);return i<0?99:i};
+  const sortR=(a,b)=>confOrder(a.conference)-confOrder(b.conference)||(a.conference||"").localeCompare(b.conference||"")||(canonChurch(a)||a).district.localeCompare((canonChurch(b)||b).district||"")||(canonChurch(a)||a).church.localeCompare((canonChurch(b)||b).church||"")||a.surname.localeCompare(b.surname);
+  const stamp=new Date().toLocaleString("en-ZA",{dateStyle:"long",timeStyle:"short"});
+  function sheet(name,title,cols,rows,opt={}){
+    const ws=wb.addWorksheet(name.slice(0,31),{views:[{state:"frozen",ySplit:4}],properties:{tabColor:{argb:opt.tab||PUR}}});
+    ws.columns=cols.map(c=>({key:c.k,width:c.w||16}));
+    ws.mergeCells(1,1,1,cols.length);const t=ws.getCell(1,1);t.value=title;t.font={name:"Georgia",size:16,bold:true,color:{argb:"FFFFFFFF"}};t.fill={type:"pattern",pattern:"solid",fgColor:{argb:PUR}};t.alignment={vertical:"middle",indent:1};ws.getRow(1).height=30;
+    ws.mergeCells(2,1,2,cols.length);const s2=ws.getCell(2,1);s2.value=`${CONFIG.EVENT} · ${CONFIG.DATES} · ${CONFIG.HOST}, ${CONFIG.HOST_PLACE} · Downloaded ${stamp}`;s2.font={name:"Calibri",size:10,italic:true,color:{argb:"FF6B5A80"}};s2.fill={type:"pattern",pattern:"solid",fgColor:{argb:LAV}};s2.alignment={indent:1};
+    const h=ws.getRow(4);cols.forEach((c,i)=>{const cell=h.getCell(i+1);cell.value=c.h;cell.font={bold:true,color:{argb:"FFF3D38A"}};cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:PUR}};cell.alignment={vertical:"middle",wrapText:true,horizontal:c.n?"center":"left"};cell.border={bottom:{style:"medium",color:{argb:GOLD}}}});h.height=32;
+    rows.forEach((r,i)=>{const row=ws.addRow(cols.map(c=>typeof c.v==="function"?c.v(r):r[c.k]));row.eachCell({includeEmpty:true},(cell,j)=>{const c=cols[j-1];cell.alignment={vertical:"top",wrapText:!!c.wrap,horizontal:c.n?"center":"left"};cell.border={bottom:{style:"hair",color:{argb:"FFE4D9EE"}}};if(i%2)cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFBF8FD"}};if(c.fmt)c.fmt(cell,r)})});
+    if(rows.length)ws.autoFilter={from:{row:4,column:1},to:{row:4+rows.length,column:cols.length}};
+    if(opt.total){const tr=ws.addRow(cols.map((c,i)=>i===0?"Total":c.sum?{formula:`SUBTOTAL(9,${ws.getColumn(i+1).letter}5:${ws.getColumn(i+1).letter}${4+rows.length})`}:""));tr.eachCell({includeEmpty:true},(cell,j)=>{cell.font={bold:true};cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF8EED6"}};cell.border={top:{style:"medium",color:{argb:GOLD}}};cell.alignment={horizontal:cols[j-1].n?"center":"left"};if(cols[j-1].nf)cell.numFmt=cols[j-1].nf})}
+    ws.pageSetup={orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0,printTitlesRow:"4:4"};
+    return ws}
+  const statusFill=(cell,g)=>{cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:!g.people.length?GRY:g.complete?GRN:AMB}};cell.font={bold:true,color:{argb:!g.people.length?"FF5F5E5A":g.complete?"FF1F7A4D":"FF9A6200"}}};
+  const tick=k=>({h:roleLabel(k).replace("Christian Education Director","CE Director"),k,w:11,n:true,v:g=>g.have[k]||"",fmt:(c,g)=>{if(g.have[k]){c.font={bold:true,color:{argb:"FF1F7A4D"}}}}});
+  const groups=delegations(regs,true);
+  const statusText=g=>!g.people.length?"Not yet registered":g.complete?"Complete":"Still needs "+listJoin(g.missing.map(m=>roleLabel(m)));
+  /* Summary */
+  const confRows=[...new Set([...confs,...regs.map(r=>r.conference||"Other")])].map(c=>{const rs=regs.filter(r=>(r.conference||"Other")===c),gs=groups.filter(g=>g.conference===c);
+    return{c,people:rs.length,clergy:rs.filter(r=>r.type==="Clergy").length,del:rs.filter(r=>r.type==="Delegate").length,obs:rs.filter(r=>r.type==="Observer").length,known:gs.length,reg:gs.filter(g=>g.people.length).length,complete:gs.filter(g=>g.complete).length,none:gs.filter(g=>!g.people.length).length,paid:rs.filter(r=>r.fee==="paid").length,owing:(rs.length-rs.filter(r=>r.fee==="paid").length)*CONFIG.REG_FEE}}).filter(x=>x.people||x.known);
+  sheet("Summary","Registration summary by conference",[{h:"Conference",k:"c",w:34},{h:"Registered",k:"people",n:1,sum:1,w:12},{h:"Clergy",k:"clergy",n:1,sum:1,w:10},{h:"Delegates",k:"del",n:1,sum:1,w:11},{h:"Observers",k:"obs",n:1,sum:1,w:11},{h:"Churches on the list",k:"known",n:1,sum:1,w:13},{h:"Churches registered",k:"reg",n:1,sum:1,w:13},{h:"Delegations complete",k:"complete",n:1,sum:1,w:13},{h:"Churches not yet registered",k:"none",n:1,sum:1,w:14},{h:"Fees paid",k:"paid",n:1,sum:1,w:10},{h:"Fees outstanding",k:"owing",n:1,sum:1,w:14,nf:'"R" #,##0',fmt:c=>{c.numFmt='"R" #,##0'}}],confRows,{total:true,tab:GOLD});
+  /* Districts */
+  const dmap=new Map();groups.forEach(g=>{const k=g.conference+"|"+g.district;if(!dmap.has(k))dmap.set(k,{c:g.conference,d:g.district||"Not given",known:0,reg:0,complete:0,people:0,Pastor:0,Adult:0,Youth:0,"CE Director":0});const o=dmap.get(k);o.known++;if(g.people.length)o.reg++;if(g.complete)o.complete++;o.people+=g.people.length;DELEG.forEach(x=>{if(g.have[x.id])o[x.id]+=g.have[x.id]})});
+  const drows=[...dmap.values()].sort((a,b)=>confOrder(a.c)-confOrder(b.c)||a.c.localeCompare(b.c)||a.d.localeCompare(b.d));
+  sheet("By district","Churches and delegates by district",[{h:"Conference",k:"c",w:30},{h:"District",k:"d",w:26},{h:"Churches on the list",k:"known",n:1,sum:1,w:12},{h:"Churches registered",k:"reg",n:1,sum:1,w:12},{h:"Delegations complete",k:"complete",n:1,sum:1,w:12},{h:"People registered",k:"people",n:1,sum:1,w:12},{h:"Pastors",k:"Pastor",n:1,sum:1,w:10},{h:"Adults",k:"Adult",n:1,sum:1,w:10},{h:"Youth",k:"Youth",n:1,sum:1,w:10},{h:"CE Directors",k:"CE Director",n:1,sum:1,w:11}],drows,{total:true});
+  /* Churches */
+  const gsorted=groups.slice().sort((a,b)=>confOrder(a.conference)-confOrder(b.conference)||a.conference.localeCompare(b.conference)||(a.district||"").localeCompare(b.district||"")||a.church.localeCompare(b.church));
+  sheet("By church","Every local church and its delegation",[{h:"Conference",k:"conference",w:28},{h:"District",k:"district",w:22},{h:"Local church",k:"church",w:36},...DELEG.map(d=>tick(d.id)),{h:"Others",k:"x",w:9,n:1,v:g=>g.people.length-DELEG.reduce((s,d)=>s+(g.have[d.id]||0),0)||""},{h:"Total",k:"t",w:8,n:1,sum:1,v:g=>g.people.length},{h:"Delegation",k:"s",w:42,wrap:1,v:statusText,fmt:statusFill}],gsorted,{total:true});
+  /* People */
+  const pcols=[{h:"Conference",k:"conference",w:26},{h:"District",k:"district",w:22,v:r=>(canonChurch(r)||r).district},{h:"Local church",k:"church",w:32,v:r=>(canonChurch(r)||r).church},{h:"Church role",k:"role",w:22,v:r=>roleOf(r)?roleLabel(roleOf(r)):"Not given"},{h:"Title",k:"title",w:12},{h:"Surname",k:"surname",w:16},{h:"Names",k:"names",w:22},{h:"Designation",k:"designation",w:26,wrap:1},{h:"Auxiliary",k:"auxiliary",w:20,wrap:1},{h:"Type",k:"type",w:10},{h:"Mobile",k:"mobile",w:14},{h:"Email",k:"email",w:28},{h:"Fee",k:"fee",w:12,v:r=>r.fee==="paid"?"Paid":"Not yet paid",fmt:(c,r)=>{c.font={color:{argb:r.fee==="paid"?"FF1F7A4D":"FF9A6200"},bold:true}}},{h:"Code",k:"code",w:10},{h:"Registered",k:"created",w:17,v:r=>r.created?new Date(r.created):""  ,fmt:c=>{c.numFmt="dd mmm yyyy hh:mm"}},{h:"Corrected",k:"edited",w:17,v:r=>r.edited?new Date(r.edited):"",fmt:c=>{c.numFmt="dd mmm yyyy hh:mm"}}];
+  const ps=regs.slice().sort(sortR);
+  sheet("All registrations","Everyone registered",pcols,ps);
+  confs.forEach(c=>{const rs=ps.filter(r=>r.conference===c);if(rs.length)sheet(c.replace(" Conference","").replace("M.M. Mokone Memorial","Mokone"),c,pcols,rs,{tab:GOLD})});
+  const buf=await wb.xlsx.writeBuffer();const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));a.download="Planning_Meeting_2026_Registrations.xlsx";document.body.appendChild(a);a.click();a.remove()}
 
 /* ============ STATUS CARD ============ */
 const CARD={w:1080,h:1920};
@@ -674,23 +813,38 @@ function bars(obj){const l=Object.entries(obj).sort((a,b)=>b[1]-a[1]);const m=l.
 const countMulti=(arr,f)=>arr.reduce((o,x)=>{const ks=String(x[f]||"").split(",").map(t=>t.trim()).filter(t=>t&&t!=="None");(ks.length?ks:["None"]).forEach(k=>o[k]=(o[k]||0)+1);return o},{});
 const count=(arr,f)=>arr.reduce((o,x)=>{const k=x[f]||"Not given";o[k]=(o[k]||0)+1;return o},{});
 let rq="",rt="all";
+let rc="all",dc="M.M. Mokone Memorial Conference",dshow=false;
+function deskChurches(regs){
+  const gs=delegations(regs,true).filter(g=>g.conference===dc&&(dshow||g.people.length));
+  const byD={};gs.forEach(g=>{(byD[g.district||"Not given"]=byD[g.district||"Not given"]||[]).push(g)});
+  const all=delegations(regs,true).filter(g=>g.conference===dc);
+  return `<section class="panel"><div class="row" style="justify-content:space-between"><h2>Church delegations</h2><select id="dconf" style="width:auto">${CONFS.filter(c=>c!=="Other").map(c=>`<option>${esc(c)}</option>`).join("")}</select></div>
+    <p class="small muted">${all.filter(g=>g.people.length).length} of ${all.length} churches registered · ${all.filter(g=>g.complete).length} complete. Each church sends at least a Pastor, an Adult, a Youth and a Christian Education Director.</p>
+    <label class="check"><input type="checkbox" id="dshow"> <span>Also show churches with nobody registered yet</span></label>
+    ${Object.keys(byD).sort().map(d=>`<h3 style="margin-top:6px">${esc(d)}</h3><div class="tbl-wrap"><table class="dtbl" style="min-width:560px"><thead><tr><th>Local church</th>${DELEG.map(x=>`<th style="text-align:center">${esc(x.label.replace("Christian Education Director","CE Director").replace(" delegate",""))}</th>`).join("")}<th>Total</th><th>Status</th></tr></thead><tbody>
+      ${byD[d].map(g=>`<tr><td>${esc(g.church)}</td>${DELEG.map(x=>`<td style="text-align:center">${g.have[x.id]?'<span style="color:var(--ok);font-weight:700">&#10003;</span>':'<span class="muted">·</span>'}</td>`).join("")}<td>${g.people.length}</td><td>${!g.people.length?'<span class="muted">Not yet registered</span>':g.complete?'<span class="status st-paid">Complete</span>':`<span class="status st-pending">${g.missing.length} needed</span>`}</td></tr>`).join("")}
+    </tbody></table></div>`).join("")||'<p class="muted">No churches registered from this conference yet.</p>'}</section>`}
 async function viewRegDesk(){
   if(!CAN.regDesk(role())){location.hash=role()?"home":"team";return}
   let all;try{all=await api("regList",{pin:pin()})}catch(e){toast(e.message);return}
-  let rows=all.slice();if(rt!=="all")rows=rows.filter(x=>x.type===rt);
+  let rows=all.slice();if(rt!=="all")rows=rows.filter(x=>x.type===rt);if(rc!=="all")rows=rows.filter(x=>x.conference===rc);
   if(rq){const q=rq.toLowerCase();rows=rows.filter(x=>(x.surname+x.names+x.church+x.conference+x.code+x.email).toLowerCase().includes(q))}
   rows.sort((a,b)=>b.created.localeCompare(a.created));
-  const t=count(all,"type");
-  app(shell(`<section class="kpis"><div class="kpi"><span>Registered</span><b>${all.length}</b></div><div class="kpi"><span>Delegates</span><b>${t.Delegate||0}</b></div><div class="kpi"><span>Clergy</span><b>${t.Clergy||0}</b></div><div class="kpi"><span>Observers</span><b>${t.Observer||0}</b></div></section>
+  const t=count(all,"type");const groups=delegOn()?delegations(all.filter(x=>!x.sample),false):[];const paidN=all.filter(x=>x.fee==="paid").length;
+  app(shell(`<section class="kpis"><div class="kpi"><span>Registered</span><b>${all.length}</b></div><div class="kpi"><span>Delegates</span><b>${t.Delegate||0}</b></div><div class="kpi"><span>Clergy</span><b>${t.Clergy||0}</b></div><div class="kpi"><span>Observers</span><b>${t.Observer||0}</b></div>${delegOn()?`<div class="kpi"><span>Churches represented</span><b>${groups.length}</b></div><div class="kpi"><span>Delegations complete</span><b>${groups.filter(g=>g.complete).length}</b></div>`:""}${CONFIG.REG_FEE&&delegOn()?`<div class="kpi"><span>Fees paid</span><b>${paidN} <span class="small muted">of ${all.length}</span></b></div>`:""}</section>
   ${all.some(x=>x.sample)?`<p class="note demo small">Rows marked <span class="tag">Sample</span> show how the desk works.</p>`:""}
-  <section class="panel"><div class="row" style="justify-content:space-between"><h2>Registrations</h2><div class="row"><button class="ghost" id="csv">Download for Excel</button><button class="ghost" id="rl">Refresh</button></div></div>
-    <div class="row"><select id="ft" style="width:auto"><option value="all">All types</option><option>Delegate</option><option>Clergy</option><option>Observer</option></select><input id="q" placeholder="Search name, church, conference" style="flex:1;min-width:160px" value="${esc(rq)}"></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Contact</th><th>Church and district</th><th>Conference</th><th>Designation</th><th>Auxiliary</th><th>Type</th><th></th></tr></thead><tbody>
-    ${rows.map(x=>`<tr><td class="mono"><a href="#ticket-${esc(x.code)}" style="color:inherit">${esc(x.code)}</a></td><td>${x.title?esc(x.title)+" ":""}${esc(x.surname)}, ${esc(x.names)}${x.sample?' <span class="tag">Sample</span>':""}</td><td>${esc(x.mobile)}<br><span class="muted small">${esc(x.email)}</span></td><td>${esc(x.church)}<br><span class="muted small">${esc(x.district)}</span></td><td>${esc(x.conference)}</td><td>${esc(x.designation)}</td><td>${esc(x.auxiliary)}</td><td>${esc(x.type)}</td><td>${canEdit()?`<a class="btn ghost" style="padding:6px 10px;font-size:13px" href="#deskedit-${esc(x.code)}">Edit</a>`:""}</td></tr>`).join("")||'<tr><td colspan="8" class="muted">No registrations match.</td></tr>'}
+  <section class="panel"><div class="row" style="justify-content:space-between"><h2>Registrations</h2><div class="row"><button class="brass" id="xlsx">Download Excel workbook</button><button class="ghost" id="csv">CSV</button><button class="ghost" id="rl">Refresh</button></div></div>
+    <div class="row"><select id="fc" style="width:auto"><option value="all">All conferences</option>${CONFS.filter(c=>c!=="Other").map(c=>`<option ${c===rc?"selected":""}>${esc(c)}</option>`).join("")}</select><select id="ft" style="width:auto"><option value="all">All types</option><option>Delegate</option><option>Clergy</option><option>Observer</option></select><input id="q" placeholder="Search name, church, conference" style="flex:1;min-width:160px" value="${esc(rq)}"></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Contact</th><th>Church and district</th><th>Conference</th><th>Designation</th><th>Auxiliary</th><th>Type</th>${delegOn()?"<th>Church role</th>":""}${CONFIG.REG_FEE&&delegOn()?"<th>Fee</th>":""}<th></th></tr></thead><tbody>
+    ${rows.map(x=>`<tr><td class="mono"><a href="#ticket-${esc(x.code)}" style="color:inherit">${esc(x.code)}</a></td><td>${x.title?esc(x.title)+" ":""}${esc(x.surname)}, ${esc(x.names)}${x.sample?' <span class="tag">Sample</span>':""}</td><td>${esc(x.mobile)}<br><span class="muted small">${esc(x.email)}</span></td><td>${esc(x.church)}<br><span class="muted small">${esc(x.district)}</span></td><td>${esc(x.conference)}</td><td>${esc(x.designation)}</td><td>${esc(x.auxiliary)}</td><td>${esc(x.type)}</td>${delegOn()?`<td>${esc(roleOf(x)?roleLabel(roleOf(x)).replace("Christian Education Director","CE Director"):"Not given")}</td>`:""}${CONFIG.REG_FEE&&delegOn()?`<td>${x.fee==="paid"?`<button class="ghost" data-fee="${esc(x.code)}" data-paid="0" title="Undo">Paid</button>`:`<button data-fee="${esc(x.code)}" data-paid="1">Mark paid</button>`}</td>`:""}<td>${canEdit()?`<a class="btn ghost" style="padding:6px 10px;font-size:13px" href="#deskedit-${esc(x.code)}">Edit</a>`:""}</td></tr>`).join("")||'<tr><td colspan="8" class="muted">No registrations match.</td></tr>'}
     </tbody></table></div></section>
+  ${delegOn()?deskChurches(all.filter(x=>!x.sample)):""}
   <div class="grid2"><section class="panel"><h3>By conference</h3><div class="bars">${bars(count(all,"conference"))}</div></section><section class="panel"><h3>By auxiliary</h3><div class="bars">${bars(countMulti(all,"auxiliary"))}</div></section></div>
   ${!LIVE&&role()==="admin"?'<div class="row"><button class="ghost" id="rs">Reset preview data</button></div>':""}`,"regdesk",true));
-  $("#ft").value=rt;$("#ft").onchange=e=>{rt=e.target.value;viewRegDesk()};$("#q").onchange=e=>{rq=e.target.value;viewRegDesk()};$("#rl").onclick=viewRegDesk;
+  $("#ft").value=rt;$("#ft").onchange=e=>{rt=e.target.value;viewRegDesk()};$("#fc").onchange=e=>{rc=e.target.value;viewRegDesk()};
+  $("#xlsx").onclick=async()=>{const b=$("#xlsx");b.disabled=true;b.textContent="Preparing...";try{await excelWorkbook(all);toast("Workbook downloaded")}catch(e){toast(e.message)}b.disabled=false;b.textContent="Download Excel workbook"};
+  document.querySelectorAll("[data-fee]").forEach(b=>b.onclick=async()=>{const paid=b.dataset.paid==="1";if(!paid&&!confirm("Mark this fee as not paid?"))return;b.disabled=true;try{await api("regFee",{pin:pin(),code:b.dataset.fee,paid,method:"EFT"});toast(paid?"Fee marked paid":"Fee marked not paid");viewRegDesk()}catch(e){toast(e.message);b.disabled=false}});
+  const dsel=$("#dconf");if(dsel){dsel.value=dc;dsel.onchange=e=>{dc=e.target.value;viewRegDesk()};$("#dshow").checked=dshow;$("#dshow").onchange=e=>{dshow=e.target.checked;viewRegDesk()}}$("#q").onchange=e=>{rq=e.target.value;viewRegDesk()};$("#rl").onclick=viewRegDesk;
   $("#csv").onclick=()=>dlCsv("Planning_Meeting_2026_Registrations.csv",[["Code","Title","Surname","Names","Email","Mobile","Church","District","Conference","Designation","Auxiliary","Registration type","Consent","Registered at","Corrected at"]].concat(all.map(x=>[x.code,x.title||"",x.surname,x.names,x.email,x.mobile,x.church,x.district,x.conference,x.designation,x.auxiliary,x.type,x.consent?"Yes":"No",x.created,x.edited||""])));
   const rs=$("#rs");if(rs)rs.onclick=async()=>{await api("reset",{pin:pin()});toast("Preview data reset");viewRegDesk()};
 }
