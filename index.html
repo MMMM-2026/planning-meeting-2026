@@ -417,7 +417,7 @@ function viewRegister(){
 
       </div>
       <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Also serving as <span class="hint">· tick any that apply</span></legend>
-        <div class="types aux">${["Consultant","Spouse of a Presiding Elder","Spouse of a Pastor","Life Member"].map(a=>`<label><input type="checkbox" name="also" value="${a}"> ${a}</label>`).join("")}</div>
+        <div class="types aux">${[["Consultant","Consultant (spouse of a Presiding Elder)"],["Spouse of a Pastor","Spouse of a Pastor"],["Life Member","Life Member"]].map(([a,l])=>`<label><input type="checkbox" name="also" value="${a}"> ${l}</label>`).join("")}</div>
       </fieldset>
       <fieldset id="auxiliary" style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Auxiliary <span class="hint">· tick every one you belong to, or leave blank if none</span></legend>
         <div class="types aux"><label><input type="checkbox" name="aux" value="WMS"> WMS</label><label><input type="checkbox" name="aux" value="Lay Organization"> Lay Organization</label><label><input type="checkbox" name="aux" value="Sons of Allen"> Sons of Allen</label><label><input type="checkbox" name="aux" value="ACE League"> ACE League</label><label><input type="checkbox" name="aux" value="CMLF"> CMLF</label><label><input type="checkbox" name="aux" value="RAYAC"> RAYAC</label><label><input type="checkbox" name="aux" value="YPD"> YPD</label><label><input type="checkbox" name="aux" value="MSWAWO and PKs"> MSWAWO and PKs</label></div>
@@ -678,11 +678,11 @@ function clergyCat(r){const d=String(r.designation||""),t=String(r.title||"");
 const dz=r=>String(r.designation||"");
 const isConn=r=>/Connectional/.test(dz(r));
 const isLife=r=>/Life Member/.test(dz(r));
-const isSpouse=r=>/Spouse of|Episcopal Supervisor/.test(dz(r))||r.title==="Supervisor";
-const isConsultant=r=>/Consultant/.test(dz(r));
+const isSpouse=r=>/Spouse of a Pastor|Episcopal Supervisor/.test(dz(r))||r.title==="Supervisor";
+const isConsultant=r=>/Consultant|Spouse of a Presiding Elder/.test(dz(r));
 const isEpisAux=r=>!isConn(r)&&(/19th Episcopal District/.test(dz(r).replace(/Episcopal Supervisor, 19th Episcopal District/,""))||/^Episcopal District Officer/.test(dz(r)));
 const isEpis=isEpisAux;
-const isConfPres=r=>{const d=dz(r).replace(/19th Episcopal District[^,]*/g,"").replace(/Connectional[^,]*/g,"").replace(/Spouse of[^,]*/g,"");return !isEpisAux(r)&&!isConn(r)&&d!=="Auxiliary President"&&(/Conference President/.test(d)||/(President|Director|Superintendent)/.test(d.replace(/^Pastor,?\s*/,"").replace(/^Presiding Elder,?\s*/,"")))};
+const isConfPres=r=>{const d=dz(r).replace(/19th Episcopal District[^,]*/g,"").replace(/Connectional[^,]*/g,"").replace(/Spouse of[^,]*/g,"").replace(/(Chief )?Consultant/g,"");return !isEpisAux(r)&&!isConn(r)&&d!=="Auxiliary President"&&(/Conference President/.test(d)||/(President|Director|Superintendent)/.test(d.replace(/^Pastor,?\s*/,"").replace(/^Presiding Elder,?\s*/,"")))};
 const isPE=r=>clergyCat(r)==="Presiding Elder";
 const AUXS=["WMS","Lay Organization","Sons of Allen","ACE League","CMLF","RAYAC","YPD","MSWAWO and PKs"];
 const auxOf=r=>String(r.auxiliary||"").split(",").map(t=>t.trim()).filter(t=>t&&t!=="None");
@@ -1174,7 +1174,7 @@ function deskLead(all){const a=analyse(all),regs=all.filter(r=>!r.sample),ls=lea
   const dl=a.dist.slice().sort((x,y)=>y.people-x.people||y.churches-x.churches);
   const auxT=Object.entries(a.aux).sort((x,y)=>y[1]-x[1]);
   return `<section class="panel"><h2>Leadership and clergy</h2>
-    <p class="small muted">Each person is counted once in the total. Someone who holds two places, such as a Presiding Elder who is also a Consultant, or a pastor who is the spouse of a Presiding Elder, appears in each group they belong to.</p>
+    <p class="small muted">Each person is counted once in the total. Someone who holds two places, such as a pastor who is also a Consultant because their spouse is a Presiding Elder, appears in each group they belong to.</p>
     <div class="kpis">${LEAD_GROUPS.map(G=>{if(G.count)return `<div class="kpi"><span>Clergy</span><b>${a.clergy}</b></div>`;const[l,list,x]=g[G.id];return `<button class="kpi ${G.id===lshow?"on":""}" data-lead="${G.id}" style="text-align:left;cursor:pointer"><span>${esc(l)}</span><b>${list.filter(y=>y.reg).length}${G.of?` <span class="small muted">of ${x.known}</span>`:""}</b></button>`}).join("")}<div class="kpi"><span>Leaders present (each once)</span><b>${a.lead.unique}</b></div></div>
     <div class="grid2"><div><h3>${esc(cur[0])}: ${cur[2].of?`not yet registered (${missing.length})`:`on our list, not yet registered (${missing.length})`}</h3><div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="ltbl"><tbody>${missing.map(x=>`<tr><td>${esc([x.title,x.names,x.surname].join(" "))}<br><span class="muted small">${esc(x.designation)}${x.conference?" · "+esc(x.conference.replace(" Conference","")):""}</span></td></tr>`).join("")||'<tr><td class="muted">Everyone is registered.</td></tr>'}</tbody></table></div></div>
     <div><h3>Registered (${done.length})</h3><div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="ltbl"><tbody>${done.map(x=>`<tr><td><span class="yes">&#10003;</span> ${esc([x.title,x.names,x.surname].join(" "))}<br><span class="muted small">${esc(x.designation)}</span></td></tr>`).join("")||'<tr><td class="muted">None yet.</td></tr>'}</tbody></table></div></div></div>
