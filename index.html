@@ -459,6 +459,10 @@ function viewRegister(){
     const miss=["title","surname","names","email","mobile",...(roNone?[]:["church","district"]),"conference"].filter(k=>!data[k]);if(!($("#designation").value==="__other"?v("desigOther"):v("designation")))miss.push("designation");
     const fail=m=>{er.textContent=m;er.hidden=false};
     if(miss.length){fail("Please fill in every field.");$("#"+(miss[0]==="title"?"rtitle":miss[0])).focus();return}
+    if(!roNone){const c=canonChurch(data);
+      if(!c||!c.district){$("#district").focus();return fail(`Please choose your district from the list. "${data.district}" is not a district, and we cannot find ${data.church} in the ${shortConf(data.conference)} list.`)}
+      if(!DISTS(data.conference).some(d=>nrmD(d)===nrmD(c.district))&&window._dWarn!==data.conference+c.district){window._dWarn=data.conference+c.district;$("#district").focus();return fail(`We do not find ${c.district} in the ${shortConf(data.conference)} list. Please check the district and the conference. If it is correct, press Register again.`)}
+      data.district=c.district;if(c.known)data.church=c.church}
     if(!/^\S+@\S+\.\S+$/.test(data.email))return fail("Please check the email address.");
     if(digits(data.mobile).length<9)return fail("Please check the mobile number.");
     if(!data.type)return fail("Please choose a registration type.");
