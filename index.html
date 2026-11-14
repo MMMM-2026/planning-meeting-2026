@@ -568,6 +568,7 @@ const OFFICERS=[
   ["Sis.","Mosima","Tambani","19th Episcopal District YPD Director","YPD"],
   ["Prof.","Agnes","Tshweu","19th Episcopal District MSWAWO and PKs President","MSWAWO and PKs"],
   ["Dr.","Lerato","Lekomanyane","19th Episcopal District RAYAC President","RAYAC"],
+  ["Mother","Xoliswa Frances","Mexico","Chief Consultant, spouse of Presiding Elder Mandisi Albert Mexico","","M.M. Mokone Memorial Conference","Capital District"],
   ["Supervisor","Carol Isabel","Messiah","Episcopal Supervisor, 19th Episcopal District",""],
   ["Sis.","Beauty Elizabeth","Mhlongo","Connectional Associate Editor",""],
   ["Rev.","Moikanyi Mmalorato","Kgositlou","Connectional AME Women in Ministry Officer and Connectional Fellowship of Church Educators Corresponding Secretary",""],
@@ -584,7 +585,7 @@ const PEOPLE=[...CLERGY.b.map(n=>({...splitClergy(n,"Bishop"),clergy:true,church
  ...CLERGY.p.map(x=>({...splitClergy(x[0],"Rev."),clergy:true,church:x[1],district:x[2],conference:"M.M. Mokone Memorial Conference",desig:"Pastor",label:x[1]+" · "+x[2]})),
  ...MORE.map(x=>({title:x[6]==="Presiding Elder"?(x[0]==="Rev. Dr."?"Presiding Elder Dr.":x[0]==="Rev."?"Presiding Elder":x[0]):x[0],names:x[1],surname:x[2],clergy:/^(Rev|Presiding|Bishop)/.test(x[0])||x[6]==="Presiding Elder",church:x[3],district:x[4],conference:x[5],desig:x[7]?x[6]+", "+x[7]:x[6],label:[x[3]||x[6],x[4],x[5].replace(" Conference",""),x[7]].filter(Boolean).join(" · ")})),
  ...CONF_OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:false,church:"",district:"",conference:o[5],desig:o[3],aux:o[4],label:o[3],office:o[3]})),
- ...OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:/^(Rev|Supervisor|Bishop|Presiding)/.test(o[0]),church:"",district:"19th Episcopal District",conference:"",desig:o[3],aux:o[4],label:o[3],office:o[3]}))];
+ ...OFFICERS.map(o=>({title:o[0],names:o[1],surname:o[2],clergy:/^(Rev|Supervisor|Bishop|Presiding)/.test(o[0]),church:"",district:o[6]||"19th Episcopal District",conference:o[5]||"",desig:o[3],aux:o[4],label:o[3],office:o[3]}))];
 /* one entry per person: an officer who is also on a clergy list keeps the clergy entry with the office added */
 (()=>{const key=p=>(p.names+" "+p.surname).toLowerCase().replace(/[^a-z ]/g,"").trim();
   for(let i=PEOPLE.length-1;i>=0;i--){const o=PEOPLE[i];if(!o.office)continue;
