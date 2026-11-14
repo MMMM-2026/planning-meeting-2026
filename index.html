@@ -127,6 +127,10 @@ td button{padding:6px 10px;font-size:12px;border-radius:7px}
 .deleg.done{border-top-color:var(--ok)}
 .btn.wa{background:#1f7a4d!important;box-shadow:none;color:#fff}
 .feebox{width:100%;display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left}.feebox b{display:block;font-family:var(--f-display);font-size:24px}
+.feebox b+span{display:block;margin-top:2px}
+.feebox.park{border-style:dashed}
+.paywho{width:100%;text-align:left;border:1px solid var(--brass);background:var(--brass-soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}.paywho>b{font-family:var(--f-display);font-size:20px}
+.feenote{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.feenote div{border:1px solid var(--line);border-left:4px solid var(--brass);border-radius:12px;padding:10px 12px}.feenote b{display:block;font-family:var(--f-display);font-size:22px;color:var(--navy)}.feenote span{font-size:12px;color:var(--muted)}
 .feebox.paid{border-color:var(--ok)}
 .pop{position:fixed;inset:0;background:rgba(18,6,30,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:30}
 .popc{background:var(--surface);border-radius:18px;border-top:4px solid var(--brass);max-width:440px;width:100%;max-height:90vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
@@ -432,7 +436,7 @@ function viewRegister(){
       </fieldset>
       <label class="check" for="consent"><input type="checkbox" id="consent"> <span>I agree that the 19th Episcopal District may keep my details and use my email and mobile to communicate with me about this meeting and the work of the District after the meeting.</span></label>
       <p id="rerr" class="err" hidden></p>
-      ${CONFIG.REG_FEE?`<p class="small muted">The registration fee for the Congress and Planning Meeting is <b>${R(CONFIG.REG_FEE)}</b> per person. Your ticket shows how to pay.</p>`:""}
+      ${CONFIG.REG_FEE?`<div class="feenote"><div><b>${R(CONFIG.REG_FEE)}</b><span>Registration per person, paid through your Presiding Elder's district</span></div><div><b>${R(CONFIG.PARK_FEE)}</b><span>Parking per car, paid to ${esc(CONFIG.HOST)}, only if you come by car</span></div></div>`:""}
       <button type="submit" id="rsub" class="brass">Register${CONFIG.REG_FEE?` · ${R(CONFIG.REG_FEE)}`:""}</button>
     </form>
   </section>`,"register"));
@@ -472,18 +476,12 @@ async function viewTicket(code){
   app(shell(`<article class="ticket">
     <div class="ticket-head"><i class="tk-rays" aria-hidden="true"></i><img class="tkcrest" src="crest.png" alt=""><div style="flex:1"><span class="eyebrow">Registration</span><h2>${esc(CONFIG.EVENT)}</h2><p class="small" style="opacity:.8">${esc(CONFIG.DATES)} · ${esc(CONFIG.HOST)}</p></div><span class="status st-reg">${esc(r.type)}</span></div>
     <div class="ticket-body">
-      <div class="who"><strong>${title?esc(title)+" ":""}${esc(r.names)} ${esc(r.surname)}</strong><span class="muted small">${esc(r.designation)} · ${esc(r.church)}</span><br><span class="muted small">${esc(r.conference)} · ${esc(r.auxiliary)}</span></div>
+      <div class="who"><strong>${title?esc(title)+" ":""}${esc(r.names)} ${esc(r.surname)}</strong><span class="muted small">${esc(r.designation)} · ${esc(r.church)}</span><br><span class="muted small">${esc([r.conference,r.auxiliary].filter(Boolean).join(" · "))}</span></div>
       <div class="qr" id="qr"></div>
       <div class="code">${esc(r.code)}</div>
       <p class="small muted">Show this at the registration desk. Save the link so you can open it again.</p>
       ${feeBlock(r)}
       <div class="row" style="justify-content:center"><button class="ghost" data-copy="${esc(base()+"#ticket-"+r.code)}">Copy ticket link</button>${canEdit()?`<a class="btn ghost" href="#edit-${esc(r.code)}">Correct my details</a>`:""}</div>
-    </div>
-    <div class="perf"></div>
-    <div class="ticket-body">
-      <h3>Coming by car?</h3>
-      <p class="small muted">Book your parking bay at Ebenezer now and drive straight in. ${R(CONFIG.PARK_FEE)} once off.</p>
-      <a class="btn brass" href="#parking-${esc(r.code)}">Book parking</a>
     </div>
     <div class="perf"></div>
     <div class="ticket-body">
@@ -732,9 +730,14 @@ const listJoin=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" and "+a[a.len
 function delegSlots(have){return `<div class="dslots">${DELEG.map(d=>`<div class="dslot ${have[d.id]?"on":""}"><span class="dmark" aria-hidden="true">${have[d.id]?"&#10003;":""}</span><b>${esc(d.label)}</b><span>${have[d.id]?"Registered":"Still needed"}</span></div>`).join("")}</div>`}
 function inviteText(r,missing){const need=listJoin(missing.map(m=>roleLabel(m).replace(" delegate"," delegate")));
   return `I have registered for the ${CONFIG.EVENT}, ${CONFIG.DATES}, at ${CONFIG.HOST}, ${CONFIG.HOST_PLACE}.\n\nEach church must send at least a Pastor, an Adult delegate, a Youth delegate and a Christian Education Director. ${r.church} still needs: ${need}.\n\nRegister here: ${base()}#register`}
+function peFor(r){const c=canonChurch(r)||r;const d=nrmD(c.district||r.district);return ROSTER.pe.find(p=>p.conference===r.conference&&nrmD(p.district)===d)||null}
+function payWhere(r){const pe=peFor(r),d=(canonChurch(r)||r).district||r.district;return pe?`through ${d}, with ${fullName(pe)}`:d?`through ${d}, your Presiding Elder's district`:"through your Presiding Elder's district"}
 function feeBlock(r){if(!CONFIG.REG_FEE)return"";const paid=r.fee==="paid";
-  return `<div class="feebox ${paid?"paid":""}"><div><span class="eyebrow" style="color:inherit">Registration fee</span><b>${R(CONFIG.REG_FEE)}</b></div><span class="status ${paid?"st-paid":"st-pending"}">${paid?"Paid":"Awaiting payment"}</span></div>
-  ${paid?"":CONFIG.REG_BANK?`<dl class="pay"><dt>Bank</dt><dd>${esc(CONFIG.REG_BANK.bank)}</dd><dt>Account name</dt><dd>${esc(CONFIG.REG_BANK.accountName)}</dd><dt>Account no.</dt><dd class="mono">${esc(CONFIG.REG_BANK.accountNumber)}</dd><dt>Branch code</dt><dd class="mono">${esc(CONFIG.REG_BANK.branchCode)}</dd><dt>Reference</dt><dd class="mono">${esc(r.code)}</dd></dl>`:`<p class="small muted">Payment details will follow in the letter from the Bishop's office. Use <b class="mono">${esc(r.code)}</b> as your reference when you pay.</p>`}`}
+  const pe=peFor(r),dist=(canonChurch(r)||r).district||r.district;
+  return `<div class="feebox ${paid?"paid":""}"><div><span class="eyebrow" style="color:inherit">Registration fee</span><b>${R(CONFIG.REG_FEE)}</b><span class="small muted">Paid through your Presiding Elder's district</span></div><span class="status ${paid?"st-paid":"st-pending"}">${paid?"Paid":"Awaiting payment"}</span></div>
+  ${paid?"":`<div class="paywho"><span class="eyebrow" style="color:var(--brass)">Pay your ${R(CONFIG.REG_FEE)} through</span><b>${esc(dist||"your Presiding Elder's district")}</b>${pe?`<span>${esc(fullName(pe))}</span>`:""}<span class="small muted">Give your registration code <b class="mono">${esc(r.code)}</b> with your payment so the district can match it to you.</span></div>`}
+  <div class="feebox park"><div><span class="eyebrow" style="color:inherit">Parking</span><b>${R(CONFIG.PARK_FEE)}</b><span class="small muted">Per car, once off, paid to ${esc(CONFIG.HOST)} when you book a bay</span></div><a class="btn ghost" href="#parking-${esc(r.code)}" style="padding:8px 12px">Book parking</a></div>
+  ${paid||true?"":CONFIG.REG_BANK?`<dl class="pay"><dt>Bank</dt><dd>${esc(CONFIG.REG_BANK.bank)}</dd><dt>Account name</dt><dd>${esc(CONFIG.REG_BANK.accountName)}</dd><dt>Account no.</dt><dd class="mono">${esc(CONFIG.REG_BANK.accountNumber)}</dd><dt>Branch code</dt><dd class="mono">${esc(CONFIG.REG_BANK.branchCode)}</dd><dt>Reference</dt><dd class="mono">${esc(r.code)}</dd></dl>`:`<p class="small muted">Payment details will follow in the letter from the Bishop's office. Use <b class="mono">${esc(r.code)}</b> as your reference when you pay.</p>`}`}
 async function delegPanel(r){if(!delegOn()||roleOf(r)==="None")return"";const key=r.churchKey||keyOf(r);if(!key)return"";
   let st;try{st=await api("churchStatus",{key})}catch(e){return""}
   const missing=DELEG.filter(d=>!st.have[d.id]).map(d=>d.id);
@@ -809,7 +812,7 @@ const REPORTS=[
   {id:"everyone",label:"Everyone registered",fee:1},
   {id:"paid",label:"Registered and paid",money:1},
   {id:"unpaid",label:"Registered, not yet paid",money:1},
-  {id:"money",label:"Money by conference and district",money:1},
+  {id:"money",label:"Registration fees by district",money:1},
   {id:"churches",label:"Church delegations"},
   {id:"leaders",label:"Leadership: who has and has not registered"},
   {id:"clergy",label:"Clergy by order"},
@@ -833,7 +836,7 @@ function brData(all){const regs=all.filter(r=>!r.sample);const f=BR,money=CONFIG
       out={title:"Registered, not yet paid",cols:[...pcols,{h:"Owing",k:"o",w:10,v:()=>CONFIG.REG_FEE,num:1}],rows,sum:[["Not yet paid",rows.length],["Outstanding",R(rows.length*CONFIG.REG_FEE)]],select:true,remind:true};break}
     case"money":{const m=new Map();people.forEach(r=>{const c=canonChurch(r)||r;const k=r.conference+"|"+c.district;if(!m.has(k))m.set(k,{cf:r.conference,d:c.district||"Not given",n:0,p:0});const o=m.get(k);o.n++;if(r.fee==="paid")o.p++});
       const rows=[...m.values()].sort((a,b)=>a.cf.localeCompare(b.cf)||a.d.localeCompare(b.d));const n=rows.reduce((s,x)=>s+x.n,0),pd=rows.reduce((s,x)=>s+x.p,0);
-      out={title:"Money by conference and district",cols:[{h:"Conference",k:"cf",w:28,v:x=>shortConf(x.cf)},{h:"District",k:"d",w:24},{h:"Registered",k:"n",w:11,num:1},{h:"Paid",k:"p",w:9,num:1},{h:"Not yet paid",k:"u",w:12,num:1,v:x=>x.n-x.p},{h:"Received (R)",k:"rv",w:13,num:1,v:x=>x.p*CONFIG.REG_FEE},{h:"Outstanding (R)",k:"ow",w:14,num:1,v:x=>(x.n-x.p)*CONFIG.REG_FEE}],rows,sum:[["Registered",n],["Paid",pd],["Received",R(pd*CONFIG.REG_FEE)],["Outstanding",R((n-pd)*CONFIG.REG_FEE)]]};break}
+      out={title:"Registration fees by district",cols:[{h:"Conference",k:"cf",w:28,v:x=>shortConf(x.cf)},{h:"District",k:"d",w:24},{h:"Registered",k:"n",w:11,num:1},{h:"Paid",k:"p",w:9,num:1},{h:"Not yet paid",k:"u",w:12,num:1,v:x=>x.n-x.p},{h:"Presiding Elder",k:"pe",w:28,v:x=>{const p=ROSTER.pe.find(y=>y.conference===x.cf&&nrmD(y.district)===nrmD(x.d));return p?fullName(p):""}},{h:"Collected by district (R)",k:"rv",w:14,num:1,v:x=>x.p*CONFIG.REG_FEE},{h:"Still to collect (R)",k:"ow",w:14,num:1,v:x=>(x.n-x.p)*CONFIG.REG_FEE}],rows,sum:[["Registered",n],["Paid",pd],["Received",R(pd*CONFIG.REG_FEE)],["Outstanding",R((n-pd)*CONFIG.REG_FEE)]]};break}
     case"churches":{let gs=delegations(regs,true).filter(g=>(f.conf==="all"||g.conference===f.conf)&&(f.dist==="all"||nrmD(g.district)===nrmD(f.dist))&&(!f.q||g.church.toLowerCase().includes(f.q.toLowerCase())));
       const st=g=>!g.people.length?"none":g.complete?"complete":"incomplete";const all2=gs;gs=gs.filter(g=>f.dstat==="any"||st(g)===f.dstat);
       out={title:"Church delegations",cols:[{h:"Church",k:"church",w:32},{h:"District",k:"district",w:22},{h:"Conference",k:"cf",w:14,v:g=>shortConf(g.conference)},...DELEG.map(d=>({h:roleShort(d.id).replace(" delegate",""),k:d.id,w:9,num:1,v:g=>g.have[d.id]?"✓":""})),{h:"Total",k:"t",w:8,num:1,v:g=>g.people.length},{h:"Status",k:"s",w:34,v:g=>!g.people.length?"Not yet registered":g.complete?"Complete":"Still needs "+listJoin(g.missing.map(roleShort))}],rows:gs,
@@ -890,7 +893,9 @@ function peReport(pe,regs){const money=CONFIG.REG_FEE&&delegOn();
   if(!money&&mine.length)L.push("","*Registered*",list(mine.slice().sort(byCh),r=>`${fullName(r)}${ch(r)?", "+ch(r):""}`));
   if(inc.length)L.push("","*Churches still to complete their delegation*",list(inc,g=>`${g.church}: still needs ${listJoin(g.missing.map(roleShort))}`));
   if(none.length)L.push("","*Churches with nobody registered yet*",list(none,g=>g.church));
-  L.push("","Each church sends at least a Pastor, an Adult, a Youth and a Christian Education Director."+(money?` The fee is ${R(CONFIG.REG_FEE)} per person, with the registration code as the payment reference.`:""),"",`Kindly encourage your pastors and churches. Registration: ${base()}#register`,"","God bless you.",PE_SIGN);
+  L.push("","Each church sends at least a Pastor, an Adult, a Youth and a Christian Education Director."+(money?`
+
+The registration fee of ${R(CONFIG.REG_FEE)} per person is paid through your district. Kindly collect it from those listed as not yet paid, and send the Registration Committee the names of those who have paid so they can be marked. Each person's code is shown next to their name. Parking (${R(CONFIG.PARK_FEE)} per car) is paid separately to ${CONFIG.HOST}.`:""),"",`Kindly encourage your pastors and churches. Registration: ${base()}#register`,"","God bless you.",PE_SIGN);
   return{text:L.join("\n"),n:mine.length,paid:paid.length,unpaid:unpaid.length,churches:gs.length,reg:gs.length-none.length,complete:done.length}}
 function brPEs(all){const regs=all.filter(r=>!r.sample),rs=rosterStatus(regs),nums=peNums(),sent=peSent();
   const pes=rs.pe.filter(x=>BR.conf==="all"||x.conference===BR.conf).map(x=>({...x,num:nums[peKey(x)]||(x.reg?x.reg.mobile:""),sent:sent[peKey(x)]||"",rep:peReport(x,regs)}));
@@ -935,7 +940,7 @@ async function viewBackroom(){
     <div class="sumbar">${d.sum.map(x=>`<div><b>${esc(x[1])}</b><span>${esc(x[0])}</span></div>`).join("")}</div>
     ${d.select&&d.rows.length?`<div class="row"><label class="check"><input type="checkbox" id="brall"> <span>Select all</span></label><button id="brpay" class="brass">Mark selected as paid</button><span class="small muted" id="brn">0 selected</span></div>`:""}
     <div class="tbl-wrap"><table><thead><tr>${d.select?"<th></th>":""}${d.cols.map(c=>`<th${c.num?' style="text-align:center"':""}>${esc(c.h)}</th>`).join("")}${d.remind?"<th></th>":""}</tr></thead><tbody>
-      ${d.rows.map(r=>`<tr>${d.select?`<td><input type="checkbox" class="brsel" value="${esc(r.code)}"></td>`:""}${d.cols.map(c=>{const v=cellV(c,r);return `<td${c.num?' style="text-align:center"':""}>${v==="Paid"||v==="Yes"||v==="Complete"||v==="✓"?`<span style="color:var(--ok);font-weight:700">${esc(v)}</span>`:esc(v)}</td>`}).join("")}${d.remind?`<td><a class="btn wa" style="padding:6px 10px;font-size:13px" target="_blank" rel="noopener" href="https://wa.me/${waNum(r.mobile)}?text=${encodeURIComponent(`Dear ${fullName(r)},\n\nThank you for registering for the ${CONFIG.EVENT}, ${CONFIG.DATES}. Our records show your registration fee of ${R(CONFIG.REG_FEE)} is still outstanding. Please use ${r.code} as your payment reference.${CONFIG.REG_BANK?`\n\n${CONFIG.REG_BANK.bank}, ${CONFIG.REG_BANK.accountName}, account ${CONFIG.REG_BANK.accountNumber}, branch ${CONFIG.REG_BANK.branchCode}.`:""}\n\nYour ticket: ${base()}#ticket-${r.code}\n\nGod bless you.`)}">Remind</a></td>`:""}</tr>`).join("")||`<tr><td colspan="${d.cols.length+2}" class="muted">Nothing matches yet.</td></tr>`}
+      ${d.rows.map(r=>`<tr>${d.select?`<td><input type="checkbox" class="brsel" value="${esc(r.code)}"></td>`:""}${d.cols.map(c=>{const v=cellV(c,r);return `<td${c.num?' style="text-align:center"':""}>${v==="Paid"||v==="Yes"||v==="Complete"||v==="✓"?`<span style="color:var(--ok);font-weight:700">${esc(v)}</span>`:esc(v)}</td>`}).join("")}${d.remind?`<td><a class="btn wa" style="padding:6px 10px;font-size:13px" target="_blank" rel="noopener" href="https://wa.me/${waNum(r.mobile)}?text=${encodeURIComponent(`Dear ${fullName(r)},\n\nThank you for registering for the ${CONFIG.EVENT}, ${CONFIG.DATES}. Our records show your registration fee of ${R(CONFIG.REG_FEE)} is still outstanding. Kindly pay it ${payWhere(r)}, and give your registration code ${r.code} so it can be matched to you.${CONFIG.REG_BANK?`\n\n${CONFIG.REG_BANK.bank}, ${CONFIG.REG_BANK.accountName}, account ${CONFIG.REG_BANK.accountNumber}, branch ${CONFIG.REG_BANK.branchCode}.`:""}\n\nYour ticket: ${base()}#ticket-${r.code}\n\nGod bless you.`)}">Remind</a></td>`:""}</tr>`).join("")||`<tr><td colspan="${d.cols.length+2}" class="muted">Nothing matches yet.</td></tr>`}
     </tbody></table></div></section>`}`,"backroom",true));
   if(isPE){on0();bindPEs(all,ped);return}
   on0();
@@ -955,9 +960,9 @@ function rankDistricts(dist){return(dist||[]).map(d=>{const known=KNOWN.filter(k
 
 /* ============ INVITE SOMEONE ============ */
 const INVITES=[
-  {id:"member",label:"A member of my church",msg:()=>`Greetings!\n\nI have registered for the ${CONFIG.EVENT} at ${CONFIG.HOST}, ${CONFIG.HOST_PLACE}, ${CONFIG.DATES}.\n\nIt would mean so much to have you there with us. Every church sends a Pastor, an Adult, a Youth and a Christian Education Director, and I believe there is a place for you in our delegation.\n\nRegistering takes two minutes on your phone:\n${base()}#register\n\nGod bless you, and I hope to see you at Ebenezer.`},
+  {id:"member",label:"A member of my church",msg:()=>`Greetings!\n\nI have registered for the ${CONFIG.EVENT} at ${CONFIG.HOST}, ${CONFIG.HOST_PLACE}, ${CONFIG.DATES}.\n\nIt would mean so much to have you there with us. Every church sends a Pastor, an Adult, a Youth and a Christian Education Director, and I believe there is a place for you in our delegation.\n\nRegistration is ${R(CONFIG.REG_FEE)}, paid through our Presiding Elder's district. If you come by car, parking is ${R(CONFIG.PARK_FEE)}, paid to ${CONFIG.HOST}.\n\nRegistering takes two minutes on your phone:\n${base()}#register\n\nGod bless you, and I hope to see you at Ebenezer.`},
   {id:"youth",label:"A young person",msg:()=>`Hey! 🙌\n\nThe ${CONFIG.EVENT} is happening at ${CONFIG.HOST}, ${CONFIG.HOST_PLACE}, ${CONFIG.DATES}, and the Church needs young voices in the room.\n\n"Now unto Him that is able to do exceedingly abundantly above all that we ask or think" (Ephesians 3:20). Come and see what God is doing in the 19th Episcopal District.\n\nRegister here in two minutes, then make your own "I am registered" card for your status:\n${base()}#register\n\nGod bless you!`},
-  {id:"pastor",label:"My pastor",msg:()=>`Dear Reverend,\n\nGreetings in the name of our Lord Jesus Christ.\n\nRegistration is open for the ${CONFIG.EVENT}, ${CONFIG.DATES}, at ${CONFIG.HOST}, ${CONFIG.HOST_PLACE}. Each church is asked to send at least its Pastor, an Adult, a Youth and a Christian Education Director.\n\nWe would be honoured to have you lead our delegation. You can register here, and when you type your name the app fills in your details:\n${base()}#register\n\nGod bless you.`},
+  {id:"pastor",label:"My pastor",msg:()=>`Dear Reverend,\n\nGreetings in the name of our Lord Jesus Christ.\n\nRegistration is open for the ${CONFIG.EVENT}, ${CONFIG.DATES}, at ${CONFIG.HOST}, ${CONFIG.HOST_PLACE}. Each church is asked to send at least its Pastor, an Adult, a Youth and a Christian Education Director.\n\nRegistration is ${R(CONFIG.REG_FEE)} per person, paid through the Presiding Elder's district, and parking is ${R(CONFIG.PARK_FEE)} per car, paid to ${CONFIG.HOST}.\n\nWe would be honoured to have you lead our delegation. You can register here, and when you type your name the app fills in your details:\n${base()}#register\n\nGod bless you.`},
   {id:"friend",label:"A friend in another church",msg:()=>`Greetings, my friend!\n\nI am going to the ${CONFIG.EVENT} at ${CONFIG.HOST}, ${CONFIG.HOST_PLACE}, ${CONFIG.DATES}, and I would love for us to be there together.\n\nAsk your pastor about your church's delegation, and register here:\n${base()}#register\n\nYou can watch the whole District gather live on the dashboard:\n${base()}#dashboard\n\nGod go with you.`}
 ];
 function inviteSheet(){document.querySelectorAll(".pop").forEach(x=>x.remove());const dlg=document.createElement("div");dlg.className="pop";dlg.setAttribute("role","dialog");dlg.setAttribute("aria-modal","true");
