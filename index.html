@@ -163,7 +163,7 @@ body.ddark{background:#12061e}body.ddark #app~*{color:#b6a5cb}
 .dstats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.dstats div{display:flex;flex-direction:column}.dstats b,.dcount b{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,6vw,60px);line-height:1;color:#f3d38a;text-shadow:0 0 30px rgba(243,211,138,.35)}.dstats span,.dcount span{font-size:13px;color:#d9c6ee}
 .dcount{text-align:center}
 .spark{width:100%;height:80px}.sp-a{fill:rgba(243,211,138,.15);stroke:none}.sp-l{fill:none;stroke:#f3d38a;stroke-width:2.5;vector-effect:non-scaling-stroke}
-.gauges{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}@media(max-width:620px){.gauges{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.gauges{display:flex;flex-wrap:wrap;justify-content:center;gap:18px 12px}.gauges .gauge{flex:0 0 calc(25% - 12px)}@media(max-width:620px){.gauges .gauge{flex-basis:calc(50% - 12px)}}
 .gauge{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center}.gauge svg{width:min(140px,100%);transform:rotate(-90deg)}.gauge b{position:absolute;top:calc(min(140px,100%)/2 - 22px);font-family:var(--f-display);font-size:30px;color:#fff7df}.gauge b small{font-size:13px;color:#b6a5cb;font-family:var(--f-body)}.gauge span{font-size:13px;color:#d9c6ee;margin-top:6px}
 .gauge.plain{justify-content:center}.gauge.plain b{position:static;font-size:52px;color:#f3d38a}
 .g-bg{fill:none;stroke:rgba(255,255,255,.1);stroke-width:9}.g-fg{fill:none;stroke:url(#gold);stroke:#e0b65a;stroke-width:9;stroke-linecap:round;transition:stroke-dasharray 1.4s}
@@ -386,7 +386,7 @@ function homeLead(st){const top=(o,n)=>Object.entries(o||{}).sort((a,b)=>b[1]-a[
   const ta=top(st.aux,3),medal=i=>["#c79a3a","#9aa3b6","#b06a3b"][i];
   const stat=(label,n,of)=>`<div class="lstat"><b>${n}</b><span>${esc(label)}${of?` <em>of ${of}</em>`:""}</span></div>`;
   return `<div class="lhead">Leadership present</div>
-    <div class="lgrid">${stat("Presiding Elders",st.lead.pe,ROSTER.pe.length)}${stat("Episcopal District officers",st.lead.epis,ROSTER.epis.length)}${stat("Conference presidents and heads",st.lead.conf,ROSTER.conf.length)}${stat("Clergy",st.clergy)}</div>
+    <div class="lgrid">${LEAD_GROUPS.map(g=>stat(g.label,g.count?(st.clergy||0):(st.lead[g.id]||0),g.of?(ROSTER[g.id]||[]).length:0)).join("")}</div>
     ${dl.length?`<div class="lhead">Leading districts</div><ol class="rank">${dl.map((d,i)=>`<li><span class="medal" style="background:${medal(i)}">${i+1}</span><div><b>${esc(d.district)}</b><span>${esc(d.conference.replace(" Conference",""))} · ${d.churches}${d.known?" of "+d.known:""} churches · ${d.people} registered</span></div></li>`).join("")}</ol>`:""}
     ${ta.length?`<div class="lhead">Leading auxiliaries</div><ol class="rank">${ta.map(([k,n],i)=>`<li><span class="medal" style="background:${medal(i)}">${i+1}</span><div><b>${esc(k)}</b><span>${n} registered</span></div></li>`).join("")}</ol>`:""}`}
 
@@ -416,6 +416,9 @@ function viewRegister(){
         <label for="designation">Designation<select id="designation"><option value="">Choose</option><optgroup label="Clergy"><option>Bishop</option><option>Presiding Elder</option><option>Pastor</option><option>Itinerant Elder</option><option>Itinerant Deacon</option><option>Supernumerary Preacher</option><option>Superannuated Preacher</option><option>Local Elder</option><option>Local Deacon</option><option>Licentiate</option><option>Chaplain</option></optgroup><optgroup label="Officers"><option>Episcopal District Officer</option><option>Conference President</option><option>Auxiliary President</option></optgroup><optgroup label="Laity"><option>Steward</option><option>Trustee</option><option>Class Leader</option><option>Life Member</option><option>Member</option><option>PK (Preacher's Kid)</option></optgroup><option value="__other">Other, I will type it</option></select><input id="desigOther" placeholder="Type your designation" hidden style="margin-top:6px"></label>
 
       </div>
+      <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Also serving as <span class="hint">· tick any that apply</span></legend>
+        <div class="types aux">${["Consultant","Spouse of a Presiding Elder","Spouse of a Pastor","Life Member"].map(a=>`<label><input type="checkbox" name="also" value="${a}"> ${a}</label>`).join("")}</div>
+      </fieldset>
       <fieldset id="auxiliary" style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Auxiliary <span class="hint">· tick every one you belong to, or leave blank if none</span></legend>
         <div class="types aux"><label><input type="checkbox" name="aux" value="WMS"> WMS</label><label><input type="checkbox" name="aux" value="Lay Organization"> Lay Organization</label><label><input type="checkbox" name="aux" value="Sons of Allen"> Sons of Allen</label><label><input type="checkbox" name="aux" value="ACE League"> ACE League</label><label><input type="checkbox" name="aux" value="CMLF"> CMLF</label><label><input type="checkbox" name="aux" value="RAYAC"> RAYAC</label><label><input type="checkbox" name="aux" value="YPD"> YPD</label><label><input type="checkbox" name="aux" value="MSWAWO and PKs"> MSWAWO and PKs</label></div>
       </fieldset>
@@ -447,9 +450,9 @@ function viewRegister(){
   $("#rf").onsubmit=async e=>{
     e.preventDefault();const v=id=>$("#"+id).value.trim();const er=$("#rerr");
     const t=document.querySelector('input[name="type"]:checked');
-    const data={title:v("rtitle"),surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:$("#designation").value==="__other"?v("desigOther"):v("designation"),auxiliary:[...document.querySelectorAll('input[name="aux"]:checked')].map(c=>c.value).join(", "),type:t?t.value:"",consent:$("#consent").checked};
+    const data={title:v("rtitle"),surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:[$("#designation").value==="__other"?v("desigOther"):v("designation"),...[...document.querySelectorAll('input[name="also"]:checked')].map(c=>c.value).filter(a=>!(a==="Life Member"&&v("designation")==="Life Member"))].filter(Boolean).join(", "),auxiliary:[...document.querySelectorAll('input[name="aux"]:checked')].map(c=>c.value).join(", "),type:t?t.value:"",consent:$("#consent").checked};
     const roNone=delegOn()&&(document.querySelector('input[name="crole"]:checked')||{}).value==="None";
-    const miss=["title","surname","names","email","mobile",...(roNone?[]:["church","district"]),"conference","designation"].filter(k=>!data[k]);
+    const miss=["title","surname","names","email","mobile",...(roNone?[]:["church","district"]),"conference"].filter(k=>!data[k]);if(!($("#designation").value==="__other"?v("desigOther"):v("designation")))miss.push("designation");
     const fail=m=>{er.textContent=m;er.hidden=false};
     if(miss.length){fail("Please fill in every field.");$("#"+(miss[0]==="title"?"rtitle":miss[0])).focus();return}
     if(!/^\S+@\S+\.\S+$/.test(data.email))return fail("Please check the email address.");
@@ -672,26 +675,47 @@ function clergyCat(r){const d=String(r.designation||""),t=String(r.title||"");
   if(t==="Lic.")return"Licentiate";
   if(r.type==="Clergy"||/^Rev/.test(t))return"Other clergy";
   return""}
-const isEpis=r=>{const d=String(r.designation||"");return /19th Episcopal District|Connectional|Episcopal Supervisor|^Episcopal District Officer/.test(d)||r.title==="Supervisor"};
-const isConfPres=r=>{const d=String(r.designation||"").replace(/19th Episcopal District[^,]*/g,"").replace(/Connectional[^,]*/g,"");return d!=="Auxiliary President"&&(/Conference President/.test(d)||/(President|Director|Superintendent)/.test(d.replace(/^Pastor,?\s*/,"").replace(/^Presiding Elder,?\s*/,"")))};
+const dz=r=>String(r.designation||"");
+const isConn=r=>/Connectional/.test(dz(r));
+const isLife=r=>/Life Member/.test(dz(r));
+const isSpouse=r=>/Spouse of|Episcopal Supervisor/.test(dz(r))||r.title==="Supervisor";
+const isConsultant=r=>/Consultant/.test(dz(r));
+const isEpisAux=r=>!isConn(r)&&(/19th Episcopal District/.test(dz(r).replace(/Episcopal Supervisor, 19th Episcopal District/,""))||/^Episcopal District Officer/.test(dz(r)));
+const isEpis=isEpisAux;
+const isConfPres=r=>{const d=dz(r).replace(/19th Episcopal District[^,]*/g,"").replace(/Connectional[^,]*/g,"").replace(/Spouse of[^,]*/g,"");return !isEpisAux(r)&&!isConn(r)&&d!=="Auxiliary President"&&(/Conference President/.test(d)||/(President|Director|Superintendent)/.test(d.replace(/^Pastor,?\s*/,"").replace(/^Presiding Elder,?\s*/,"")))};
 const isPE=r=>clergyCat(r)==="Presiding Elder";
 const AUXS=["WMS","Lay Organization","Sons of Allen","ACE League","CMLF","RAYAC","YPD","MSWAWO and PKs"];
 const auxOf=r=>String(r.auxiliary||"").split(",").map(t=>t.trim()).filter(t=>t&&t!=="None");
 const nameKey=(n,s)=>(String(n||"")+" "+String(s||"")).toLowerCase().replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
 const ROSTER=(()=>{const o=PEOPLE.map(p=>({title:p.title,names:p.names,surname:p.surname,designation:p.desig,conference:p.conference,district:p.district,church:p.church}));
-  return{pe:o.filter(isPE),epis:o.filter(isEpis),conf:o.filter(r=>isConfPres(r)&&!isEpis(r))}})();
+  return{pe:o.filter(isPE),cons:o.filter(isConsultant),spouse:o.filter(isSpouse),conn:o.filter(r=>isConn(r)||isLife(r)),epis:o.filter(isEpisAux),conf:o.filter(isConfPres)}})();
+const LEAD_GROUPS=[
+  {id:"pe",label:"Presiding Elders",test:isPE,of:true},
+  {id:"cons",label:"Consultants",test:isConsultant},
+  {id:"clergy",label:"Clergy",test:r=>!!clergyCat(r),count:true},
+  {id:"spouse",label:"Spouses",test:isSpouse},
+  {id:"conn",label:"Connectional Officers and Life Members",test:r=>isConn(r)||isLife(r)},
+  {id:"epis",label:"Episcopal Auxiliary Presidents",test:isEpisAux,of:true},
+  {id:"conf",label:"Conference Auxiliary Presidents",test:isConfPres,of:true}];
+const LISTED=LEAD_GROUPS.filter(g=>!g.count);
 function analyse(regs){regs=regs.filter(r=>!r.sample);
   const cats={},aux={},dist={},auxConf={};let clergy=0;
-  const lead={pe:0,epis:0,conf:0,unique:0};
+  const lead={unique:0};LISTED.forEach(g=>lead[g.id]=0);
   regs.forEach(r=>{const c=clergyCat(r);if(c){cats[c]=(cats[c]||0)+1;clergy++}
-    const a=isPE(r),b=isEpis(r),cp=isConfPres(r)&&!b;if(a)lead.pe++;if(b)lead.epis++;if(cp)lead.conf++;if(a||b||cp)lead.unique++;
+    let any=false;LISTED.forEach(g=>{if(g.test(r)){lead[g.id]=(lead[g.id]||0)+1;any=true}});if(any)lead.unique++;
     const cf=r.conference||"Other";auxOf(r).forEach(x=>{aux[x]=(aux[x]||0)+1;auxConf[cf]=auxConf[cf]||{};auxConf[cf][x]=(auxConf[cf][x]||0)+1});
     const cc=canonChurch(r);const dname=(cc&&cc.district)||r.district||"";if(dname&&!/19th Episcopal/.test(dname)){const k=cf+"|"+dname;dist[k]=dist[k]||{conference:cf,district:dname,people:0,churches:new Set()};dist[k].people++;if(cc&&roleOf(r)!=="None")dist[k].churches.add(cc.key)}});
   const dl=Object.values(dist).map(d=>({conference:d.conference,district:d.district,people:d.people,churches:d.churches.size,known:KNOWN.filter(k=>k.conference===d.conference&&nrmD(k.district)===nrmD(d.district)).length}));
   return{total:regs.length,clergy,cats,lead,aux,auxConf,dist:dl}}
 function rosterStatus(regs){const have=new Map();regs.filter(r=>!r.sample).forEach(r=>have.set(nameKey(r.names,r.surname),r));
   const st=list=>list.map(x=>({...x,reg:have.get(nameKey(x.names,x.surname))||null}));
-  return{pe:st(ROSTER.pe),epis:st(ROSTER.epis),conf:st(ROSTER.conf)}}
+  const out={pe:st(ROSTER.pe),epis:st(ROSTER.epis),conf:st(ROSTER.conf)};return out}
+/* every listed group: the known names plus anyone who registered in that group without being on a list */
+function leaderStatus(regs){regs=regs.filter(r=>!r.sample);const have=new Map();regs.forEach(r=>have.set(nameKey(r.names,r.surname),r));
+  return LISTED.map(g=>{const known=(ROSTER[g.id]||[]).map(x=>({...x,reg:have.get(nameKey(x.names,x.surname))||null}));const seen=new Set(known.map(x=>nameKey(x.names,x.surname)));
+    const extra=regs.filter(r=>g.test(r)&&!seen.has(nameKey(r.names,r.surname))).map(r=>({title:r.title,names:r.names,surname:r.surname,designation:r.designation,conference:r.conference,reg:r}));
+    return{...g,list:[...known,...extra],known:known.length}})}
+const leadOf=(g,regd)=>g.of?`${regd} of ${(ROSTER[g.id]||[]).length}`:`${regd}`;
 function publicStatsOf(regs){const conf={},keys=new Map();regs.forEach(r=>{if(r.sample)return;const c=r.conference||"Other";conf[c]=conf[c]||{people:0,churches:0,complete:0};conf[c].people++;const ro=roleOf(r);if(ro==="None")return;const k=keyOf(r);if(!k)return;if(!keys.has(k))keys.set(k,{conf:c,have:{}});if(ro)keys.get(k).have[ro]=1});
   keys.forEach(g=>{conf[g.conf].churches++;if(DELEG.every(d=>g.have[d.id]))conf[g.conf].complete++});
   const real=regs.filter(r=>!r.sample);
@@ -757,8 +781,8 @@ async function excelWorkbook(all){
   sheet("By church","Every local church and its delegation",[{h:"Conference",k:"conference",w:28},{h:"District",k:"district",w:22},{h:"Local church",k:"church",w:36},...DELEG.map(d=>tick(d.id)),{h:"Others",k:"x",w:9,n:1,v:g=>g.people.length-DELEG.reduce((s,d)=>s+(g.have[d.id]||0),0)||""},{h:"Total",k:"t",w:8,n:1,sum:1,v:g=>g.people.length},{h:"Delegation",k:"s",w:42,wrap:1,v:statusText,fmt:statusFill}],gsorted,{total:true});
   /* Leadership */
   const rs=rosterStatus(regs),an=analyse(regs);
-  const lrows=[...rs.pe.map(x=>({...x,g:"Presiding Elder"})),...rs.epis.map(x=>({...x,g:"Episcopal District officer"})),...rs.conf.map(x=>({...x,g:"Conference president or head"}))];
-  sheet("Leadership","Presiding Elders, Episcopal District officers and Conference heads",[{h:"Group",k:"g",w:26},{h:"Conference",k:"conference",w:26,v:x=>x.conference||"19th Episcopal District"},{h:"Name",k:"n",w:32,v:x=>[x.title,x.names,x.surname].join(" ")},{h:"Office",k:"designation",w:46,wrap:1},{h:"Registered",k:"r",w:13,n:1,v:x=>x.reg?"Yes":"Not yet",fmt:(c,x)=>{c.font={bold:true,color:{argb:x.reg?"FF1F7A4D":"FF9A6200"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:x.reg?GRN:AMB}}}},{h:"Code",k:"c",w:10,v:x=>x.reg?x.reg.code:""},{h:"Mobile",k:"m",w:14,v:x=>x.reg?x.reg.mobile:""}],lrows,{tab:GOLD});
+  const lrows=leaderStatus(regs).flatMap(g=>g.list.map(x=>({...x,g:g.label})));
+  sheet("Leadership","Leadership in the order of the District",[{h:"Group",k:"g",w:26},{h:"Conference",k:"conference",w:26,v:x=>x.conference||"19th Episcopal District"},{h:"Name",k:"n",w:32,v:x=>[x.title,x.names,x.surname].join(" ")},{h:"Office",k:"designation",w:46,wrap:1},{h:"Registered",k:"r",w:13,n:1,v:x=>x.reg?"Yes":"Not yet",fmt:(c,x)=>{c.font={bold:true,color:{argb:x.reg?"FF1F7A4D":"FF9A6200"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:x.reg?GRN:AMB}}}},{h:"Code",k:"c",w:10,v:x=>x.reg?x.reg.code:""},{h:"Mobile",k:"m",w:14,v:x=>x.reg?x.reg.mobile:""}],lrows,{tab:GOLD});
   /* Clergy */
   const crow=CLERGY_CATS.filter(c=>an.cats[c]).map(c=>{const o={c};confs.forEach(cf=>o[cf]=regs.filter(r=>r.conference===cf&&clergyCat(r)===c).length);o.t=an.cats[c];return o});
   sheet("Clergy","Clergy registered by order and conference",[{h:"Order",k:"c",w:26},...confs.map(cf=>({h:cf.replace(" Conference","").replace("M.M. Mokone Memorial","Mokone"),k:cf,w:12,n:1,sum:1})),{h:"Total",k:"t",w:10,n:1,sum:1}],crow,{total:true});
@@ -813,7 +837,7 @@ function brData(all){const regs=all.filter(r=>!r.sample);const f=BR,money=CONFIG
       const st=g=>!g.people.length?"none":g.complete?"complete":"incomplete";const all2=gs;gs=gs.filter(g=>f.dstat==="any"||st(g)===f.dstat);
       out={title:"Church delegations",cols:[{h:"Church",k:"church",w:32},{h:"District",k:"district",w:22},{h:"Conference",k:"cf",w:14,v:g=>shortConf(g.conference)},...DELEG.map(d=>({h:roleShort(d.id).replace(" delegate",""),k:d.id,w:9,num:1,v:g=>g.have[d.id]?"✓":""})),{h:"Total",k:"t",w:8,num:1,v:g=>g.people.length},{h:"Status",k:"s",w:34,v:g=>!g.people.length?"Not yet registered":g.complete?"Complete":"Still needs "+listJoin(g.missing.map(roleShort))}],rows:gs,
         sum:[["Churches",all2.length],["Complete",all2.filter(g=>st(g)==="complete").length],["Incomplete",all2.filter(g=>st(g)==="incomplete").length],["Not yet registered",all2.filter(g=>st(g)==="none").length]]};break}
-    case"leaders":{const rs=rosterStatus(regs);let rows=[...rs.pe.map(x=>({...x,g:"Presiding Elder"})),...rs.epis.map(x=>({...x,g:"Episcopal District officer"})),...rs.conf.map(x=>({...x,g:"Conference head"}))];
+    case"leaders":{let rows=leaderStatus(regs).flatMap(g=>g.list.map(x=>({...x,g:g.label})));
       rows=rows.filter(x=>(f.conf==="all"||x.conference===f.conf||(!x.conference&&f.conf==="all"))&&(f.lgrp==="all"||x.g===f.lgrp)&&(f.lstat==="any"||(f.lstat==="yes")===!!x.reg));
       out={title:"Leadership",cols:[{h:"Group",k:"g",w:22},{h:"Name",k:"n",w:32,v:fullName},{h:"Office",k:"designation",w:40},{h:"Conference",k:"cf",w:14,v:x=>shortConf(x.conference)||"District"},{h:"Registered",k:"r",w:11,v:x=>x.reg?"Yes":"Not yet"},...(money?[{h:"Paid",k:"p",w:9,v:x=>x.reg?(x.reg.fee==="paid"?"Yes":"No"):""}]:[]),{h:"Mobile",k:"m",w:14,v:x=>x.reg?x.reg.mobile:""}],rows,
         sum:[["Listed",rows.length],["Registered",rows.filter(x=>x.reg).length],["Not yet",rows.filter(x=>!x.reg).length]]};break}
@@ -842,7 +866,7 @@ function waSummary(all){const regs=all.filter(r=>!r.sample),a=analyse(regs),gs=d
   const day=new Date().toLocaleDateString("en-ZA",{weekday:"long",day:"numeric",month:"long"});
   const lines=[`*${CONFIG.EVENT}*`,`Registration update, ${day}`,"",`Registered: ${regs.length}`,...(money?[`Paid: ${pd} (${R(pd*CONFIG.REG_FEE)})`,`Not yet paid: ${regs.length-pd} (${R((regs.length-pd)*CONFIG.REG_FEE)} outstanding)`]:[]),`Churches represented: ${gs.length}`,`Delegations complete: ${gs.filter(g=>g.complete).length}`,"",
     "*By conference*",...CONFS.filter(c=>c!=="Other").map(c=>{const rs=regs.filter(r=>r.conference===c);return `${shortConf(c)}: ${rs.length} registered${money?`, ${rs.filter(r=>r.fee==="paid").length} paid`:""}`}),"",
-    "*Leadership present*",`Presiding Elders: ${a.lead.pe} of ${ROSTER.pe.length}`,`Episcopal District officers: ${a.lead.epis} of ${ROSTER.epis.length}`,`Conference heads: ${a.lead.conf} of ${ROSTER.conf.length}`,`Clergy: ${a.clergy}`,"",
+    "*Leadership present*",...LEAD_GROUPS.map(g=>`${g.label}: ${leadOf(g,g.count?a.clergy:a.lead[g.id])}`),"",
     `Register here: ${base()}#register`,"","God bless you."];return lines.join("\n")}
 /* ---- one report per Presiding Elder, sent on WhatsApp ---- */
 const PE_SIGN="The Registration Committee";
@@ -900,7 +924,7 @@ async function viewBackroom(){
   const sel=(id,opts,v)=>`<select id="${id}" style="width:auto">${opts.map(([k,l])=>`<option value="${esc(k)}" ${k===v?"selected":""}>${esc(l)}</option>`).join("")}</select>`;
   const extra=BR.rep==="everyone"&&money?sel("brfee",[["any","paid or not"],["paid","who have paid"],["unpaid","who have not paid"]],BR.fee)
     :BR.rep==="churches"?sel("brds",[["any","any status"],["complete","complete"],["incomplete","still incomplete"],["none","with nobody registered"]],BR.dstat)
-    :BR.rep==="leaders"?sel("brlg",[["all","all leaders"],["Presiding Elder","Presiding Elders"],["Episcopal District officer","Episcopal District officers"],["Conference head","Conference heads"]],BR.lgrp)+sel("brls",[["any","registered or not"],["yes","who have registered"],["no","who have not registered"]],BR.lstat):"";
+    :BR.rep==="leaders"?sel("brlg",[["all","all leaders"],...LISTED.map(g=>[g.label,g.label])],BR.lgrp)+sel("brls",[["any","registered or not"],["yes","who have registered"],["no","who have not registered"]],BR.lstat):"";
   app(shell(`<section class="panel"><span class="eyebrow" style="color:var(--brass)">Back room</span><h2>What would you like to see?</h2>
     <div class="chips">${reps.map(r=>`<button class="chipb ${r.id===BR.rep?"on":""}" data-rep="${r.id}">${esc(r.label)}</button>`).join("")}</div>
     <div class="ask"><span>Show me</span><b>${esc(cur.label.toLowerCase())}</b>${extra}<span>for</span>${sel("brconf",[["all","all conferences"],...CONFS.filter(c=>c!=="Other").map(c=>[c,c])],BR.conf)}${isPE?"":sel("brdist",[["all","every district"],...dists.map(x=>[x,x])],BR.dist)+`<input id="brq" placeholder="a name, church or code" value="${esc(BR.q)}" style="width:auto;min-width:180px">`}</div>
@@ -954,7 +978,7 @@ function crownSvg(st){const confs=["Natal Conference","East Conference","Orangia
     const am=(a0+a1)/2,lx=cx+(R+30)*Math.cos(am),ly=cy+(R+30)*Math.sin(am);h+=`<text x="${lx.toFixed(0)}" y="${(ly-4).toFixed(0)}" class="ring-l" text-anchor="middle">${esc(shortConf(c))}</text><text x="${lx.toFixed(0)}" y="${(ly+18).toFixed(0)}" class="ring-p" text-anchor="middle">${Math.round(share*100)}%</text><text x="${lx.toFixed(0)}" y="${(ly+36).toFixed(0)}" class="ring-n" text-anchor="middle">${x.churches} of ${k} churches</text>`});
   return `<svg viewBox="-70 -30 540 470" class="crown" role="img" aria-label="Churches registered in each conference"><defs><linearGradient id="gold" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#fff0c2"/><stop offset=".45" stop-color="#e0b65a"/><stop offset="1" stop-color="#a8761f"/></linearGradient><radialGradient id="glow"><stop offset="0" stop-color="rgba(255,214,130,.45)"/><stop offset="1" stop-color="rgba(255,214,130,0)"/></radialGradient></defs><circle cx="200" cy="200" r="120" fill="url(#glow)"/>${h}
     <image href="crest.png" x="150" y="112" width="100" height="100"/><text x="200" y="248" text-anchor="middle" class="crown-n" id="dtot">0</text><text x="200" y="272" text-anchor="middle" class="crown-l">registered</text></svg>`}
-function gauge(label,n,of){const k=of?Math.min(1,n/of):0,r=38,c=2*Math.PI*r;return `<div class="gauge"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" class="g-bg"/><circle cx="50" cy="50" r="${r}" class="g-fg" style="stroke-dasharray:${(c*k).toFixed(1)} ${c.toFixed(1)}"/></svg><b>${n}<small> of ${of}</small></b><span>${esc(label)}</span></div>`}
+function gauge(label,n,of){const k=of?Math.min(1,n/of):0,r=38,c=2*Math.PI*r;return `<div class="gauge"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="${r}" class="g-bg"/>${!of?`<circle cx="50" cy="50" r="${r}" class="g-fg" style="opacity:.35"/>`:k>0?`<circle cx="50" cy="50" r="${r}" class="g-fg" style="stroke-dasharray:${(c*k).toFixed(1)} ${c.toFixed(1)}"/>`:""}</svg><b>${n}${of?`<small> of ${of}</small>`:""}</b><span>${esc(label)}</span></div>`}
 function sparkline(daily){const days=[];const t=new Date();for(let i=20;i>=0;i--){const d=new Date(t);d.setDate(t.getDate()-i);const k=d.toISOString().slice(0,10);days.push(daily[k]||0)}
   const m=Math.max(1,...days),w=300,h=60,pts=days.map((v,i)=>`${(i*w/(days.length-1)).toFixed(1)},${(h-4-(v/m)*(h-12)).toFixed(1)}`).join(" ");
   return `<svg viewBox="0 0 ${w} ${h}" class="spark" preserveAspectRatio="none"><polyline points="0,${h} ${pts} ${w},${h}" class="sp-a"/><polyline points="${pts}" class="sp-l"/></svg>`}
@@ -986,7 +1010,7 @@ async function viewDashboard(){clearInterval(dashTimer);cancelAnimationFrame(das
           <section class="dcard"><h3>Registrations each day</h3>${sparkline(st.daily||{})}<p class="dsub">The last three weeks</p></section>
         </div>
       </div>
-      <section class="dcard"><h3>Leadership present</h3><div class="gauges">${gauge("Presiding Elders",st.lead?st.lead.pe:0,ROSTER.pe.length)}${gauge("Episcopal District officers",st.lead?st.lead.epis:0,ROSTER.epis.length)}${gauge("Conference heads",st.lead?st.lead.conf:0,ROSTER.conf.length)}<div class="gauge plain"><b>${st.clergy||0}</b><span>Clergy registered</span></div></div></section>
+      <section class="dcard"><h3>Leadership present</h3><div class="gauges">${LEAD_GROUPS.map(g=>{const n=g.count?(st.clergy||0):(st.lead&&st.lead[g.id]||0);return gauge(g.label,n,g.of?(ROSTER[g.id]||[]).length:0)}).join("")}</div></section>
       <div class="dgrid two">
         <section class="dcard"><h3>Leading districts</h3><p class="dsub">By the share of their churches that have registered</p>
           ${dl.length?`<div class="podium">${pod.map((d,i)=>d?`<div class="pod p${[2,1,3][i]}"><span class="pn">${esc(d.district)}</span><span class="pc">${esc(shortConf(d.conference))}</span><div class="pbar"><b>${[2,1,3][i]}</b><em>${Math.round(d.share*100)}%</em><small>${d.churches} of ${d.known} churches</small></div></div>`:`<div class="pod empty"></div>`).join("")}</div>`:`<p class="dwait">The first district to register takes the lead.</p>`}</section>
@@ -1143,16 +1167,16 @@ const count=(arr,f)=>arr.reduce((o,x)=>{const k=x[f]||"Not given";o[k]=(o[k]||0)
 let rq="",rt="all";
 let rc="all",dc="M.M. Mokone Memorial Conference",dshow=false;
 let lshow="pe";
-function deskLead(all){const a=analyse(all),rs=rosterStatus(all),regs=all.filter(r=>!r.sample);
-  const g={pe:["Presiding Elders",rs.pe],epis:["Episcopal District officers",rs.epis],conf:["Conference presidents and heads",rs.conf]};
+function deskLead(all){const a=analyse(all),regs=all.filter(r=>!r.sample),ls=leaderStatus(all);
+  const g={};ls.forEach(x=>g[x.id]=[x.label,x.list,x]);
   const cur=g[lshow]||g.pe,missing=cur[1].filter(x=>!x.reg),done=cur[1].filter(x=>x.reg);
   const confs=CONFS.filter(c=>c!=="Other");
   const dl=a.dist.slice().sort((x,y)=>y.people-x.people||y.churches-x.churches);
   const auxT=Object.entries(a.aux).sort((x,y)=>y[1]-x[1]);
   return `<section class="panel"><h2>Leadership and clergy</h2>
-    <p class="small muted">Each person is counted once in the total. Someone who holds two offices, such as a Presiding Elder who is also an Episcopal District officer, appears in both lines below.</p>
-    <div class="kpis">${Object.entries(g).map(([k,[l,list]])=>`<button class="kpi ${k===lshow?"on":""}" data-lead="${k}" style="text-align:left;cursor:pointer"><span>${esc(l)}</span><b>${list.filter(x=>x.reg).length} <span class="small muted">of ${list.length}</span></b></button>`).join("")}<div class="kpi"><span>Leaders present (each once)</span><b>${a.lead.unique}</b></div></div>
-    <div class="grid2"><div><h3>${esc(cur[0])}: not yet registered (${missing.length})</h3><div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="ltbl"><tbody>${missing.map(x=>`<tr><td>${esc([x.title,x.names,x.surname].join(" "))}<br><span class="muted small">${esc(x.designation)}${x.conference?" · "+esc(x.conference.replace(" Conference","")):""}</span></td></tr>`).join("")||'<tr><td class="muted">Everyone is registered.</td></tr>'}</tbody></table></div></div>
+    <p class="small muted">Each person is counted once in the total. Someone who holds two places, such as a Presiding Elder who is also a Consultant, or a pastor who is the spouse of a Presiding Elder, appears in each group they belong to.</p>
+    <div class="kpis">${LEAD_GROUPS.map(G=>{if(G.count)return `<div class="kpi"><span>Clergy</span><b>${a.clergy}</b></div>`;const[l,list,x]=g[G.id];return `<button class="kpi ${G.id===lshow?"on":""}" data-lead="${G.id}" style="text-align:left;cursor:pointer"><span>${esc(l)}</span><b>${list.filter(y=>y.reg).length}${G.of?` <span class="small muted">of ${x.known}</span>`:""}</b></button>`}).join("")}<div class="kpi"><span>Leaders present (each once)</span><b>${a.lead.unique}</b></div></div>
+    <div class="grid2"><div><h3>${esc(cur[0])}: ${cur[2].of?`not yet registered (${missing.length})`:`on our list, not yet registered (${missing.length})`}</h3><div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="ltbl"><tbody>${missing.map(x=>`<tr><td>${esc([x.title,x.names,x.surname].join(" "))}<br><span class="muted small">${esc(x.designation)}${x.conference?" · "+esc(x.conference.replace(" Conference","")):""}</span></td></tr>`).join("")||'<tr><td class="muted">Everyone is registered.</td></tr>'}</tbody></table></div></div>
     <div><h3>Registered (${done.length})</h3><div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="ltbl"><tbody>${done.map(x=>`<tr><td><span class="yes">&#10003;</span> ${esc([x.title,x.names,x.surname].join(" "))}<br><span class="muted small">${esc(x.designation)}</span></td></tr>`).join("")||'<tr><td class="muted">None yet.</td></tr>'}</tbody></table></div></div></div>
     <h3 style="margin-top:8px">Clergy by order (${a.clergy})</h3>
     <div class="tbl-wrap"><table><thead><tr><th>Order</th>${confs.map(c=>`<th style="text-align:center">${esc(c.replace(" Conference","").replace("M.M. Mokone Memorial","Mokone"))}</th>`).join("")}<th style="text-align:center">Total</th></tr></thead><tbody>
