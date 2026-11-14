@@ -106,6 +106,8 @@ button:disabled{opacity:.55;cursor:default}
 .meter{height:8px;border-radius:5px;background:var(--line);overflow:hidden}.meter i{display:block;height:100%;background:linear-gradient(90deg,#c79a3a,#f3d38a)}
 @media (max-width:420px){.bays{grid-template-columns:1fr}}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+button.kpi{background:var(--surface)!important;color:var(--ink);box-shadow:none;font-weight:400;border:1px solid var(--line);border-left:4px solid var(--brass);padding:12px}
+.kpi.on{border-color:var(--brass);background:var(--brass-soft)}
 .kpi{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--brass);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column}
 .kpi span{font-size:12px;color:var(--muted)}.kpi b{font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums}
 .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
@@ -130,6 +132,11 @@ td button{padding:6px 10px;font-size:12px;border-radius:7px}
 .popc{background:var(--surface);border-radius:18px;border-top:4px solid var(--brass);max-width:440px;width:100%;max-height:90vh;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
 .popc .panel{border:0;padding:0}
 .live{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}.live b{display:block;font-family:var(--f-display);font-size:30px;line-height:1.1;color:var(--navy)}.live span{font-size:12px;color:var(--muted)}
+.lhead{font-family:var(--f-cap);font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin-top:6px;border-top:1px solid var(--line);padding-top:12px}
+.lgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.lstat{border:1px solid var(--line);border-radius:12px;padding:10px}.lstat b{display:block;font-family:var(--f-display);font-size:26px;color:var(--navy);line-height:1.1}.lstat span{font-size:12px;color:var(--muted)}.lstat em{font-style:normal}
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}.rank li{display:flex;gap:10px;align-items:center}.rank li div{display:flex;flex-direction:column}.rank li span:not(.medal){font-size:12px;color:var(--muted)}
+.medal{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
+.ltbl td{vertical-align:top}.ltbl .yes{color:var(--ok);font-weight:700}
 .crow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:13px;align-items:center}.crow .meter{grid-column:1/-1}
 .dtbl td,.dtbl th{white-space:normal}
 .blessing{font-family:var(--f-display);font-style:italic;color:var(--muted);font-size:16px}
@@ -329,7 +336,16 @@ async function liveBoard(){const box=$("#livebox");if(!box||!delegOn())return;le
   box.innerHTML=`<section class="panel"><span class="eyebrow" style="color:var(--brass)">Registration so far</span>
     <div class="live"><div><b>${st.total}</b><span>people registered</span></div><div><b>${churches}</b><span>churches represented</span></div><div><b>${complete}</b><span>delegations complete</span></div></div>
     ${confs.map(c=>{const x=st.conf[c]||{people:0,churches:0,complete:0},k=known(c);return `<div class="crow"><b>${esc(c.replace(" Conference",""))}</b><span class="muted">${x.people} registered · ${x.churches} of ${k} churches</span><div class="meter"><i style="width:${k?Math.min(100,Math.round(x.churches/k*100)):0}%"></i></div></div>`}).join("")}
+    ${st.lead?homeLead(st):""}
     <a class="btn brass" href="#register">Register now</a></section>`}
+function homeLead(st){const top=(o,n)=>Object.entries(o||{}).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  const dl=(st.dist||[]).map(d=>({...d,known:KNOWN.filter(k=>k.conference===d.conference&&nrmD(k.district)===nrmD(d.district)).length})).sort((a,b)=>b.people-a.people||b.churches-a.churches).slice(0,3);
+  const ta=top(st.aux,3),medal=i=>["#c79a3a","#9aa3b6","#b06a3b"][i];
+  const stat=(label,n,of)=>`<div class="lstat"><b>${n}</b><span>${esc(label)}${of?` <em>of ${of}</em>`:""}</span></div>`;
+  return `<div class="lhead">Leadership present</div>
+    <div class="lgrid">${stat("Presiding Elders",st.lead.pe,ROSTER.pe.length)}${stat("Episcopal District officers",st.lead.epis,ROSTER.epis.length)}${stat("Conference presidents and heads",st.lead.conf,ROSTER.conf.length)}${stat("Clergy",st.clergy)}</div>
+    ${dl.length?`<div class="lhead">Leading districts</div><ol class="rank">${dl.map((d,i)=>`<li><span class="medal" style="background:${medal(i)}">${i+1}</span><div><b>${esc(d.district)}</b><span>${esc(d.conference.replace(" Conference",""))} · ${d.people} registered · ${d.churches}${d.known?" of "+d.known:""} churches</span></div></li>`).join("")}</ol>`:""}
+    ${ta.length?`<div class="lhead">Leading auxiliaries</div><ol class="rank">${ta.map(([k,n],i)=>`<li><span class="medal" style="background:${medal(i)}">${i+1}</span><div><b>${esc(k)}</b><span>${n} registered</span></div></li>`).join("")}</ol>`:""}`}
 
 /* ============ REGISTRATION ============ */
 function viewRegister(){
@@ -581,6 +597,7 @@ function viewWorship(){
 /* ============ CHURCH DELEGATIONS ============ */
 const DELEG=[{id:"Pastor",label:"Pastor"},{id:"Adult",label:"Adult delegate"},{id:"Youth",label:"Youth delegate"},{id:"CE Director",label:"Christian Education Director"}];
 const ROLE_OPTS=[...DELEG,{id:"Additional",label:"Another member of my church's delegation"},{id:"None",label:"Not representing a local church (Presiding Elder, officer or observer)"}];
+const roleShort=id=>({"Christian Education Director":"CE Director","CE Director":"CE Director",None:"Not a church delegate",Additional:"Additional member"})[id]||roleLabel(id);
 const roleLabel=id=>(ROLE_OPTS.find(r=>r.id===id)||{label:id||"Not given"}).label;
 const delegOn=()=>!LIVE||CONFIG.DELEG_LIVE;
 const nrm=s=>String(s||"").toLowerCase().replace(/\ba\.m\.e\.?/g," ").replace(/\bame\b/g," ").replace(/\bchurch\b/g," ").replace(/\bmt\b\.?/g,"mount ").replace(/[^a-z0-9]+/g," ").trim();
@@ -602,9 +619,39 @@ function canonChurch(r){const cf=r.conference||"",nc=nrm(r.church);if(!nc||!cf)r
   return{key:cf+"|"+nrmD(district)+"|"+nrm(church),church,district,conference:cf,known:!!k}}
 const keyOf=r=>r.churchKey||(canonChurch(r)||{}).key||"";
 function churchStatusOf(regs,key){const have={};let total=0;regs.forEach(r=>{if(keyOf(r)!==key)return;const ro=roleOf(r);if(ro==="None")return;total++;if(ro)have[ro]=(have[ro]||0)+1});return{total,have}}
+/* ---- leadership, clergy, auxiliaries ---- */
+const CLERGY_CATS=["Bishop","Presiding Elder","Pastor","Itinerant Elder","Itinerant Deacon","Local Elder","Local Deacon","Licentiate","Supernumerary Preacher","Superannuated Preacher","Chaplain","Other clergy"];
+function clergyCat(r){const d=String(r.designation||""),t=String(r.title||"");
+  if(/^Bishop/.test(d)||t==="Bishop")return"Bishop";
+  if(/^Presiding Elder/.test(d)||/^Presiding Elder/.test(t))return"Presiding Elder";
+  if(/^Pastor/.test(d))return"Pastor";
+  for(const c of["Itinerant Elder","Itinerant Deacon","Local Elder","Local Deacon","Licentiate","Supernumerary Preacher","Superannuated Preacher","Chaplain"])if(d.indexOf(c)===0)return c;
+  if(t==="Lic.")return"Licentiate";
+  if(r.type==="Clergy"||/^Rev/.test(t))return"Other clergy";
+  return""}
+const isEpis=r=>{const d=String(r.designation||"");return /19th Episcopal District|Connectional|Episcopal Supervisor|^Episcopal District Officer/.test(d)||r.title==="Supervisor"};
+const isConfPres=r=>{const d=String(r.designation||"").replace(/19th Episcopal District[^,]*/g,"").replace(/Connectional[^,]*/g,"");return d!=="Auxiliary President"&&(/Conference President/.test(d)||/(President|Director|Superintendent)/.test(d.replace(/^Pastor,?\s*/,"").replace(/^Presiding Elder,?\s*/,"")))};
+const isPE=r=>clergyCat(r)==="Presiding Elder";
+const AUXS=["WMS","Lay Organization","Sons of Allen","ACE League","CMLF","RAYAC","YPD","MSWAWO and PKs"];
+const auxOf=r=>String(r.auxiliary||"").split(",").map(t=>t.trim()).filter(t=>t&&t!=="None");
+const nameKey=(n,s)=>(String(n||"")+" "+String(s||"")).toLowerCase().replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
+const ROSTER=(()=>{const o=PEOPLE.map(p=>({title:p.title,names:p.names,surname:p.surname,designation:p.desig,conference:p.conference,district:p.district,church:p.church}));
+  return{pe:o.filter(isPE),epis:o.filter(isEpis),conf:o.filter(r=>isConfPres(r)&&!isEpis(r))}})();
+function analyse(regs){regs=regs.filter(r=>!r.sample);
+  const cats={},aux={},dist={},auxConf={};let clergy=0;
+  const lead={pe:0,epis:0,conf:0,unique:0};
+  regs.forEach(r=>{const c=clergyCat(r);if(c){cats[c]=(cats[c]||0)+1;clergy++}
+    const a=isPE(r),b=isEpis(r),cp=isConfPres(r)&&!b;if(a)lead.pe++;if(b)lead.epis++;if(cp)lead.conf++;if(a||b||cp)lead.unique++;
+    const cf=r.conference||"Other";auxOf(r).forEach(x=>{aux[x]=(aux[x]||0)+1;auxConf[cf]=auxConf[cf]||{};auxConf[cf][x]=(auxConf[cf][x]||0)+1});
+    const cc=canonChurch(r);const dname=(cc&&cc.district)||r.district||"";if(dname&&!/19th Episcopal/.test(dname)){const k=cf+"|"+dname;dist[k]=dist[k]||{conference:cf,district:dname,people:0,churches:new Set()};dist[k].people++;if(cc&&roleOf(r)!=="None")dist[k].churches.add(cc.key)}});
+  const dl=Object.values(dist).map(d=>({conference:d.conference,district:d.district,people:d.people,churches:d.churches.size,known:KNOWN.filter(k=>k.conference===d.conference&&nrmD(k.district)===nrmD(d.district)).length}));
+  return{total:regs.length,clergy,cats,lead,aux,auxConf,dist:dl}}
+function rosterStatus(regs){const have=new Map();regs.filter(r=>!r.sample).forEach(r=>have.set(nameKey(r.names,r.surname),r));
+  const st=list=>list.map(x=>({...x,reg:have.get(nameKey(x.names,x.surname))||null}));
+  return{pe:st(ROSTER.pe),epis:st(ROSTER.epis),conf:st(ROSTER.conf)}}
 function publicStatsOf(regs){const conf={},keys=new Map();regs.forEach(r=>{if(r.sample)return;const c=r.conference||"Other";conf[c]=conf[c]||{people:0,churches:0,complete:0};conf[c].people++;const ro=roleOf(r);if(ro==="None")return;const k=keyOf(r);if(!k)return;if(!keys.has(k))keys.set(k,{conf:c,have:{}});if(ro)keys.get(k).have[ro]=1});
   keys.forEach(g=>{conf[g.conf].churches++;if(DELEG.every(d=>g.have[d.id]))conf[g.conf].complete++});
-  return{total:regs.filter(r=>!r.sample).length,conf}}
+  const a=analyse(regs);return{total:regs.filter(r=>!r.sample).length,conf,clergy:a.clergy,cats:a.cats,lead:a.lead,aux:a.aux,dist:a.dist.map(d=>({conference:d.conference,district:d.district,people:d.people,churches:d.churches}))}}
 function delegations(regs,withKnown){const map=new Map();
   if(withKnown)KNOWN.forEach(k=>map.set(k.conference+"|"+nrmD(k.district)+"|"+nrm(k.church),{church:k.church,district:k.district,conference:k.conference,people:[],have:{}}));
   regs.forEach(r=>{const ro=roleOf(r);if(ro==="None")return;const c=canonChurch(r);if(!c)return;let g=map.get(c.key);if(!g){g={church:c.church,district:c.district,conference:c.conference,people:[],have:{}};map.set(c.key,g)}g.people.push(r);const k=ro||"Unassigned";g.have[k]=(g.have[k]||0)+1});
@@ -662,6 +709,19 @@ async function excelWorkbook(all){
   /* Churches */
   const gsorted=groups.slice().sort((a,b)=>confOrder(a.conference)-confOrder(b.conference)||a.conference.localeCompare(b.conference)||(a.district||"").localeCompare(b.district||"")||a.church.localeCompare(b.church));
   sheet("By church","Every local church and its delegation",[{h:"Conference",k:"conference",w:28},{h:"District",k:"district",w:22},{h:"Local church",k:"church",w:36},...DELEG.map(d=>tick(d.id)),{h:"Others",k:"x",w:9,n:1,v:g=>g.people.length-DELEG.reduce((s,d)=>s+(g.have[d.id]||0),0)||""},{h:"Total",k:"t",w:8,n:1,sum:1,v:g=>g.people.length},{h:"Delegation",k:"s",w:42,wrap:1,v:statusText,fmt:statusFill}],gsorted,{total:true});
+  /* Leadership */
+  const rs=rosterStatus(regs),an=analyse(regs);
+  const lrows=[...rs.pe.map(x=>({...x,g:"Presiding Elder"})),...rs.epis.map(x=>({...x,g:"Episcopal District officer"})),...rs.conf.map(x=>({...x,g:"Conference president or head"}))];
+  sheet("Leadership","Presiding Elders, Episcopal District officers and Conference heads",[{h:"Group",k:"g",w:26},{h:"Conference",k:"conference",w:26,v:x=>x.conference||"19th Episcopal District"},{h:"Name",k:"n",w:32,v:x=>[x.title,x.names,x.surname].join(" ")},{h:"Office",k:"designation",w:46,wrap:1},{h:"Registered",k:"r",w:13,n:1,v:x=>x.reg?"Yes":"Not yet",fmt:(c,x)=>{c.font={bold:true,color:{argb:x.reg?"FF1F7A4D":"FF9A6200"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:x.reg?GRN:AMB}}}},{h:"Code",k:"c",w:10,v:x=>x.reg?x.reg.code:""},{h:"Mobile",k:"m",w:14,v:x=>x.reg?x.reg.mobile:""}],lrows,{tab:GOLD});
+  /* Clergy */
+  const crow=CLERGY_CATS.filter(c=>an.cats[c]).map(c=>{const o={c};confs.forEach(cf=>o[cf]=regs.filter(r=>r.conference===cf&&clergyCat(r)===c).length);o.t=an.cats[c];return o});
+  sheet("Clergy","Clergy registered by order and conference",[{h:"Order",k:"c",w:26},...confs.map(cf=>({h:cf.replace(" Conference","").replace("M.M. Mokone Memorial","Mokone"),k:cf,w:12,n:1,sum:1})),{h:"Total",k:"t",w:10,n:1,sum:1}],crow,{total:true});
+  /* Auxiliaries */
+  const arow=Object.entries(an.aux).sort((x,y)=>y[1]-x[1]).map(([x,n],i)=>{const o={rank:i+1,x};confs.forEach(cf=>o[cf]=(an.auxConf[cf]||{})[x]||0);o.t=n;return o});
+  sheet("Auxiliaries","Auxiliaries by conference, leading first",[{h:"Rank",k:"rank",w:7,n:1},{h:"Auxiliary",k:"x",w:22},...confs.map(cf=>({h:cf.replace(" Conference","").replace("M.M. Mokone Memorial","Mokone"),k:cf,w:12,n:1,sum:1})),{h:"Total",k:"t",w:10,n:1,sum:1}],arow,{total:true});
+  /* Leading districts */
+  const drk=an.dist.slice().sort((x,y)=>y.people-x.people||y.churches-x.churches).map((d,i)=>({...d,rank:i+1,pct:d.known?d.churches/d.known:""}));
+  sheet("Leading districts","Districts ranked by people registered",[{h:"Rank",k:"rank",w:7,n:1},{h:"District",k:"district",w:26},{h:"Conference",k:"conference",w:28},{h:"Registered",k:"people",w:12,n:1,sum:1},{h:"Churches registered",k:"churches",w:12,n:1,sum:1},{h:"Churches on the list",k:"known",w:12,n:1},{h:"Share of churches",k:"pct",w:12,n:1,fmt:c=>{c.numFmt="0%"}}],drk,{tab:GOLD});
   /* People */
   const pcols=[{h:"Conference",k:"conference",w:26},{h:"District",k:"district",w:22,v:r=>(canonChurch(r)||r).district},{h:"Local church",k:"church",w:32,v:r=>(canonChurch(r)||r).church},{h:"Church role",k:"role",w:22,v:r=>roleOf(r)?roleLabel(roleOf(r)):"Not given"},{h:"Title",k:"title",w:12},{h:"Surname",k:"surname",w:16},{h:"Names",k:"names",w:22},{h:"Designation",k:"designation",w:26,wrap:1},{h:"Auxiliary",k:"auxiliary",w:20,wrap:1},{h:"Type",k:"type",w:10},{h:"Mobile",k:"mobile",w:14},{h:"Email",k:"email",w:28},{h:"Fee",k:"fee",w:12,v:r=>r.fee==="paid"?"Paid":"Not yet paid",fmt:(c,r)=>{c.font={color:{argb:r.fee==="paid"?"FF1F7A4D":"FF9A6200"},bold:true}}},{h:"Code",k:"code",w:10},{h:"Registered",k:"created",w:17,v:r=>r.created?new Date(r.created):""  ,fmt:c=>{c.numFmt="dd mmm yyyy hh:mm"}},{h:"Corrected",k:"edited",w:17,v:r=>r.edited?new Date(r.edited):"",fmt:c=>{c.numFmt="dd mmm yyyy hh:mm"}}];
   const ps=regs.slice().sort(sortR);
@@ -814,6 +874,28 @@ const countMulti=(arr,f)=>arr.reduce((o,x)=>{const ks=String(x[f]||"").split(","
 const count=(arr,f)=>arr.reduce((o,x)=>{const k=x[f]||"Not given";o[k]=(o[k]||0)+1;return o},{});
 let rq="",rt="all";
 let rc="all",dc="M.M. Mokone Memorial Conference",dshow=false;
+let lshow="pe";
+function deskLead(all){const a=analyse(all),rs=rosterStatus(all),regs=all.filter(r=>!r.sample);
+  const g={pe:["Presiding Elders",rs.pe],epis:["Episcopal District officers",rs.epis],conf:["Conference presidents and heads",rs.conf]};
+  const cur=g[lshow]||g.pe,missing=cur[1].filter(x=>!x.reg),done=cur[1].filter(x=>x.reg);
+  const confs=CONFS.filter(c=>c!=="Other");
+  const dl=a.dist.slice().sort((x,y)=>y.people-x.people||y.churches-x.churches);
+  const auxT=Object.entries(a.aux).sort((x,y)=>y[1]-x[1]);
+  return `<section class="panel"><h2>Leadership and clergy</h2>
+    <p class="small muted">Each person is counted once in the total. Someone who holds two offices, such as a Presiding Elder who is also an Episcopal District officer, appears in both lines below.</p>
+    <div class="kpis">${Object.entries(g).map(([k,[l,list]])=>`<button class="kpi ${k===lshow?"on":""}" data-lead="${k}" style="text-align:left;cursor:pointer"><span>${esc(l)}</span><b>${list.filter(x=>x.reg).length} <span class="small muted">of ${list.length}</span></b></button>`).join("")}<div class="kpi"><span>Leaders present (each once)</span><b>${a.lead.unique}</b></div></div>
+    <div class="grid2"><div><h3>${esc(cur[0])}: not yet registered (${missing.length})</h3><div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="ltbl"><tbody>${missing.map(x=>`<tr><td>${esc([x.title,x.names,x.surname].join(" "))}<br><span class="muted small">${esc(x.designation)}${x.conference?" · "+esc(x.conference.replace(" Conference","")):""}</span></td></tr>`).join("")||'<tr><td class="muted">Everyone is registered.</td></tr>'}</tbody></table></div></div>
+    <div><h3>Registered (${done.length})</h3><div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="ltbl"><tbody>${done.map(x=>`<tr><td><span class="yes">&#10003;</span> ${esc([x.title,x.names,x.surname].join(" "))}<br><span class="muted small">${esc(x.designation)}</span></td></tr>`).join("")||'<tr><td class="muted">None yet.</td></tr>'}</tbody></table></div></div></div>
+    <h3 style="margin-top:8px">Clergy by order (${a.clergy})</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>Order</th>${confs.map(c=>`<th style="text-align:center">${esc(c.replace(" Conference","").replace("M.M. Mokone Memorial","Mokone"))}</th>`).join("")}<th style="text-align:center">Total</th></tr></thead><tbody>
+      ${CLERGY_CATS.filter(c=>a.cats[c]).map(c=>`<tr><td>${esc(c)}</td>${confs.map(cf=>`<td style="text-align:center">${regs.filter(r=>r.conference===cf&&clergyCat(r)===c).length||""}</td>`).join("")}<td style="text-align:center"><b>${a.cats[c]}</b></td></tr>`).join("")||`<tr><td colspan="${confs.length+2}" class="muted">No clergy registered yet.</td></tr>`}</tbody></table></div>
+    <h3 style="margin-top:8px">Auxiliaries by conference</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>Auxiliary</th>${confs.map(c=>`<th style="text-align:center">${esc(c.replace(" Conference","").replace("M.M. Mokone Memorial","Mokone"))}</th>`).join("")}<th style="text-align:center">Total</th></tr></thead><tbody>
+      ${auxT.map(([x,n],i)=>`<tr><td>${i<3?`<span class="medal" style="display:inline-grid;width:20px;height:20px;font-size:11px;background:${["#c79a3a","#9aa3b6","#b06a3b"][i]}">${i+1}</span> `:""}${esc(x)}</td>${confs.map(cf=>`<td style="text-align:center">${(a.auxConf[cf]||{})[x]||""}</td>`).join("")}<td style="text-align:center"><b>${n}</b></td></tr>`).join("")||`<tr><td colspan="${confs.length+2}" class="muted">No auxiliaries ticked yet.</td></tr>`}</tbody></table></div>
+    <h3 style="margin-top:8px">Leading districts</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>District</th><th>Conference</th><th style="text-align:center">Registered</th><th style="text-align:center">Churches</th></tr></thead><tbody>
+      ${dl.slice(0,10).map((d,i)=>`<tr><td>${i+1}</td><td>${esc(d.district)}</td><td>${esc(d.conference.replace(" Conference",""))}</td><td style="text-align:center">${d.people}</td><td style="text-align:center">${d.churches}${d.known?" of "+d.known:""}</td></tr>`).join("")||'<tr><td colspan="5" class="muted">No districts yet.</td></tr>'}</tbody></table></div>
+  </section>`}
 function deskChurches(regs){
   const gs=delegations(regs,true).filter(g=>g.conference===dc&&(dshow||g.people.length));
   const byD={};gs.forEach(g=>{(byD[g.district||"Not given"]=byD[g.district||"Not given"]||[]).push(g)});
@@ -833,10 +915,11 @@ async function viewRegDesk(){
   const t=count(all,"type");const groups=delegOn()?delegations(all.filter(x=>!x.sample),false):[];const paidN=all.filter(x=>x.fee==="paid").length;
   app(shell(`<section class="kpis"><div class="kpi"><span>Registered</span><b>${all.length}</b></div><div class="kpi"><span>Delegates</span><b>${t.Delegate||0}</b></div><div class="kpi"><span>Clergy</span><b>${t.Clergy||0}</b></div><div class="kpi"><span>Observers</span><b>${t.Observer||0}</b></div>${delegOn()?`<div class="kpi"><span>Churches represented</span><b>${groups.length}</b></div><div class="kpi"><span>Delegations complete</span><b>${groups.filter(g=>g.complete).length}</b></div>`:""}${CONFIG.REG_FEE&&delegOn()?`<div class="kpi"><span>Fees paid</span><b>${paidN} <span class="small muted">of ${all.length}</span></b></div>`:""}</section>
   ${all.some(x=>x.sample)?`<p class="note demo small">Rows marked <span class="tag">Sample</span> show how the desk works.</p>`:""}
+  ${deskLead(all)}
   <section class="panel"><div class="row" style="justify-content:space-between"><h2>Registrations</h2><div class="row"><button class="brass" id="xlsx">Download Excel workbook</button><button class="ghost" id="csv">CSV</button><button class="ghost" id="rl">Refresh</button></div></div>
     <div class="row"><select id="fc" style="width:auto"><option value="all">All conferences</option>${CONFS.filter(c=>c!=="Other").map(c=>`<option ${c===rc?"selected":""}>${esc(c)}</option>`).join("")}</select><select id="ft" style="width:auto"><option value="all">All types</option><option>Delegate</option><option>Clergy</option><option>Observer</option></select><input id="q" placeholder="Search name, church, conference" style="flex:1;min-width:160px" value="${esc(rq)}"></div>
     <div class="tbl-wrap"><table><thead><tr><th>Code</th><th>Name</th><th>Contact</th><th>Church and district</th><th>Conference</th><th>Designation</th><th>Auxiliary</th><th>Type</th>${delegOn()?"<th>Church role</th>":""}${CONFIG.REG_FEE&&delegOn()?"<th>Fee</th>":""}<th></th></tr></thead><tbody>
-    ${rows.map(x=>`<tr><td class="mono"><a href="#ticket-${esc(x.code)}" style="color:inherit">${esc(x.code)}</a></td><td>${x.title?esc(x.title)+" ":""}${esc(x.surname)}, ${esc(x.names)}${x.sample?' <span class="tag">Sample</span>':""}</td><td>${esc(x.mobile)}<br><span class="muted small">${esc(x.email)}</span></td><td>${esc(x.church)}<br><span class="muted small">${esc(x.district)}</span></td><td>${esc(x.conference)}</td><td>${esc(x.designation)}</td><td>${esc(x.auxiliary)}</td><td>${esc(x.type)}</td>${delegOn()?`<td>${esc(roleOf(x)?roleLabel(roleOf(x)).replace("Christian Education Director","CE Director"):"Not given")}</td>`:""}${CONFIG.REG_FEE&&delegOn()?`<td>${x.fee==="paid"?`<button class="ghost" data-fee="${esc(x.code)}" data-paid="0" title="Undo">Paid</button>`:`<button data-fee="${esc(x.code)}" data-paid="1">Mark paid</button>`}</td>`:""}<td>${canEdit()?`<a class="btn ghost" style="padding:6px 10px;font-size:13px" href="#deskedit-${esc(x.code)}">Edit</a>`:""}</td></tr>`).join("")||'<tr><td colspan="8" class="muted">No registrations match.</td></tr>'}
+    ${rows.map(x=>`<tr><td class="mono"><a href="#ticket-${esc(x.code)}" style="color:inherit">${esc(x.code)}</a></td><td>${x.title?esc(x.title)+" ":""}${esc(x.surname)}, ${esc(x.names)}${x.sample?' <span class="tag">Sample</span>':""}</td><td>${esc(x.mobile)}<br><span class="muted small">${esc(x.email)}</span></td><td>${esc(x.church)}<br><span class="muted small">${esc(x.district)}</span></td><td>${esc(x.conference)}</td><td>${esc(x.designation)}</td><td>${esc(x.auxiliary)}</td><td>${esc(x.type)}</td>${delegOn()?`<td>${esc(roleOf(x)?roleShort(roleOf(x)):"Not given")}</td>`:""}${CONFIG.REG_FEE&&delegOn()?`<td>${x.fee==="paid"?`<button class="ghost" data-fee="${esc(x.code)}" data-paid="0" title="Undo">Paid</button>`:`<button data-fee="${esc(x.code)}" data-paid="1">Mark paid</button>`}</td>`:""}<td>${canEdit()?`<a class="btn ghost" style="padding:6px 10px;font-size:13px" href="#deskedit-${esc(x.code)}">Edit</a>`:""}</td></tr>`).join("")||'<tr><td colspan="8" class="muted">No registrations match.</td></tr>'}
     </tbody></table></div></section>
   ${delegOn()?deskChurches(all.filter(x=>!x.sample)):""}
   <div class="grid2"><section class="panel"><h3>By conference</h3><div class="bars">${bars(count(all,"conference"))}</div></section><section class="panel"><h3>By auxiliary</h3><div class="bars">${bars(countMulti(all,"auxiliary"))}</div></section></div>
@@ -844,6 +927,7 @@ async function viewRegDesk(){
   $("#ft").value=rt;$("#ft").onchange=e=>{rt=e.target.value;viewRegDesk()};$("#fc").onchange=e=>{rc=e.target.value;viewRegDesk()};
   $("#xlsx").onclick=async()=>{const b=$("#xlsx");b.disabled=true;b.textContent="Preparing...";try{await excelWorkbook(all);toast("Workbook downloaded")}catch(e){toast(e.message)}b.disabled=false;b.textContent="Download Excel workbook"};
   document.querySelectorAll("[data-fee]").forEach(b=>b.onclick=async()=>{const paid=b.dataset.paid==="1";if(!paid&&!confirm("Mark this fee as not paid?"))return;b.disabled=true;try{await api("regFee",{pin:pin(),code:b.dataset.fee,paid,method:"EFT"});toast(paid?"Fee marked paid":"Fee marked not paid");viewRegDesk()}catch(e){toast(e.message);b.disabled=false}});
+  document.querySelectorAll("[data-lead]").forEach(b=>b.onclick=()=>{lshow=b.dataset.lead;const y=window.scrollY;viewRegDesk().then(()=>window.scrollTo(0,y))});
   const dsel=$("#dconf");if(dsel){dsel.value=dc;dsel.onchange=e=>{dc=e.target.value;viewRegDesk()};$("#dshow").checked=dshow;$("#dshow").onchange=e=>{dshow=e.target.checked;viewRegDesk()}}$("#q").onchange=e=>{rq=e.target.value;viewRegDesk()};$("#rl").onclick=viewRegDesk;
   $("#csv").onclick=()=>dlCsv("Planning_Meeting_2026_Registrations.csv",[["Code","Title","Surname","Names","Email","Mobile","Church","District","Conference","Designation","Auxiliary","Registration type","Consent","Registered at","Corrected at"]].concat(all.map(x=>[x.code,x.title||"",x.surname,x.names,x.email,x.mobile,x.church,x.district,x.conference,x.designation,x.auxiliary,x.type,x.consent?"Yes":"No",x.created,x.edited||""])));
   const rs=$("#rs");if(rs)rs.onclick=async()=>{await api("reset",{pin:pin()});toast("Preview data reset");viewRegDesk()};
