@@ -982,6 +982,7 @@ const REPORTS=[
   {id:"churches",label:"Church delegations"},
   {id:"leaders",label:"Leadership: who has and has not registered"},
   {id:"chdetail",label:"Church names: waiting for the pastor"},
+  {id:"offlist",label:"Churches not on our list"},
   {id:"clergy",label:"Clergy by order"},
   {id:"aux",label:"Auxiliaries"}
 ];
@@ -1008,7 +1009,7 @@ function brData(all){const regs=all.filter(r=>!r.sample);const f=BR,money=CONFIG
       const st=g=>!g.people.length?"none":g.complete?"complete":"incomplete";const all2=gs;gs=gs.filter(g=>f.dstat==="any"||st(g)===f.dstat);
       out={title:"Church delegations",cols:[{h:"Church",k:"church",w:32},{h:"District",k:"district",w:22},{h:"Conference",k:"cf",w:14,v:g=>shortConf(g.conference)},...DELEG.map(d=>({h:roleShort(d.id).replace(" delegate",""),k:d.id,w:9,num:1,v:g=>g.have[d.id]?"✓":""})),{h:"Total",k:"t",w:8,num:1,v:g=>g.people.length},{h:"Status",k:"s",w:34,v:g=>!g.people.length?"Not yet registered":g.complete?"Complete":"Still needs "+listJoin(g.missing.map(roleShort))}],rows:gs,
         sum:[["Churches",all2.length],["Complete",all2.filter(g=>st(g)==="complete").length],["Incomplete",all2.filter(g=>st(g)==="incomplete").length],["Not yet registered",all2.filter(g=>st(g)==="none").length]]};break}
-    case"leaders":{let rows=leaderStatus(regs).flatMap(g=>g.list.map(x=>({...x,g:g.label})));
+    case"leaders":{let rows=leaderStatus(regs).flatMap(g=>g.list.map(x=>({...x,g:g.label})));if(f.dist!=="all")rows=rows.filter(x=>nrmD((x.reg?(canonChurch(x.reg)||x.reg).district:"")||x.district||"")===nrmD(f.dist));
       rows=rows.filter(x=>(f.conf==="all"||x.conference===f.conf||(!x.conference&&f.conf==="all"))&&(f.lgrp==="all"||x.g===f.lgrp)&&(f.lstat==="any"||(f.lstat==="check"?!!x.check:f.lstat==="yes"?(x.reg&&!x.check):!x.reg)));
       out={title:"Leadership",cols:[{h:"Group",k:"g",w:22},{h:"Name",k:"n",w:32,v:fullName},{h:"Office",k:"designation",w:40},{h:"Conference",k:"cf",w:14,v:x=>shortConf(x.conference)||"District"},{h:"Registered",k:"r",w:11,v:x=>x.check?"Please check":x.reg?"Yes":"Not yet"},{h:"Registered as",k:"ra",w:26,v:x=>x.reg&&nameKey(x.reg.names,x.reg.surname)!==nameKey(x.names,x.surname)?fullName(x.reg):""},...(money?[{h:"Paid",k:"p",w:9,v:x=>x.reg?(x.reg.fee==="paid"?"Yes":"No"):""}]:[]),{h:"Mobile",k:"m",w:14,v:x=>x.reg?x.reg.mobile:""}],rows,
         sum:[["Listed",rows.filter(x=>!x.check).length],["Registered",rows.filter(x=>x.reg&&!x.check).length],["Not yet",rows.filter(x=>!x.reg).length],...(rows.some(x=>x.check)?[["Please check",rows.filter(x=>x.check).length]]:[])]};break}
@@ -1021,6 +1022,8 @@ function brData(all){const regs=all.filter(r=>!r.sample);const f=BR,money=CONFIG
       out={title:"Church names: waiting for the pastor",cols:[{h:"Church",k:"name",w:34},{h:"District",k:"district",w:22},{h:"Conference",k:"cf",w:12,v:x=>shortConf(x.conference)},{h:"Pastor",k:"pastor",w:26},{h:"Still needed",k:"needs",w:30},{h:"Registered",k:"n",w:10,num:1},{h:"Status",k:"st",w:22}],rows,
         sum:[["Churches",rows.length],["Complete",rows.filter(x=>x.st==="Complete").length],["Waiting for the pastor",rows.filter(x=>x.st==="Waiting for the pastor").length],["Pastor not registered",rows.filter(x=>x.st==="Pastor not registered yet").length]],
         remindFn:x=>x.p&&x.st==="Waiting for the pastor"?{mobile:x.p.mobile,label:"Ask the pastor",text:`Greetings ${fullName(x.p)},\n\nThank you for registering for the ${CONFIG.EVENT}. Everyone from your church is listed under the name you give, and we still need ${x.needs} for ${x.name}.\n\nKindly open your ticket and press "Complete my church's name". Write it like this: Dare Mae Robinson AME Church, Saulsville.\n${base()}#edit-${x.p.code}\n\nThank you, Pastor. God bless you.\n${PE_SIGN}`}:null};break}
+    case"offlist":{const rows=people.filter(r=>r.church&&roleOf(r)!=="None"&&!/\bdistrict\s*$/i.test(String(r.church).trim())&&!(canonChurch(r)||{}).known).sort(sortP);
+      out={title:"Churches not on our list",cols:[{h:"Church as typed",k:"ct",w:32,v:r=>r.church},...pcols.filter(c=>c.k!=="c")],rows,sum:[["Not on our list",rows.length],["Churches",new Set(rows.map(r=>nrm(r.church))).size]],note:"Send these to Coach: if a church is ours spelled differently, the app learns the spelling; if it is new, it is added to the list."};break}
     case"clergy":{const confs=CONFS.filter(c=>c!=="Other"&&(f.conf==="all"||c===f.conf));const rows=CLERGY_CATS.map(c=>{const o={c};confs.forEach(cf=>o[cf]=people.filter(r=>r.conference===cf&&clergyCat(r)===c).length);o.t=confs.reduce((s,cf)=>s+o[cf],0);return o}).filter(o=>o.t);
       out={title:"Clergy by order",cols:[{h:"Order",k:"c",w:24},...confs.map(cf=>({h:shortConf(cf),k:cf,w:11,num:1})),{h:"Total",k:"t",w:9,num:1}],rows,sum:[["Clergy",rows.reduce((s,o)=>s+o.t,0)]]};break}
     case"aux":{const confs=CONFS.filter(c=>c!=="Other"&&(f.conf==="all"||c===f.conf));const tot={};people.forEach(r=>auxOf(r).forEach(a=>tot[a]=(tot[a]||0)+1));
