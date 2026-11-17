@@ -465,7 +465,7 @@ function viewRegister(){
       
       ${delegOn()?`<div id="cstat"></div>
       <fieldset id="rolefs" style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Representing your church as <span class="hint">· each church sends at least a Pastor, an Adult, a Youth and a Christian Education Director</span></legend>
-        <div class="types aux" id="roles">${ROLE_OPTS.map(o=>`<label${o.id==="Additional"||o.id==="None"?' style="grid-column:1/-1"':""}><input type="radio" name="crole" value="${o.id}"> <span>${esc(o.label)}<em class="rneed" data-r="${o.id}"></em></span></label>`).join("")}</div>
+        <div class="types aux" id="roles">${ROLE_OPTS.map(o=>`<label${o.id==="Additional"||o.id==="Observer"||o.id==="None"?' style="grid-column:1/-1"':""}><input type="radio" name="crole" value="${o.id}"> <span>${esc(o.label)}<em class="rneed" data-r="${o.id}"></em></span></label>`).join("")}</div>
       </fieldset>`:""}
       <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Registration type</legend>
         <div class="types"><label><input type="radio" name="type" value="Delegate"> Delegate</label><label><input type="radio" name="type" value="Clergy"> Clergy</label><label><input type="radio" name="type" value="Observer"> Observer</label></div>
@@ -693,8 +693,8 @@ function viewWorship(){
 
 /* ============ CHURCH DELEGATIONS ============ */
 const DELEG=[{id:"Pastor",label:"Pastor"},{id:"Adult",label:"Adult delegate"},{id:"Youth",label:"Youth delegate"},{id:"CE Director",label:"Christian Education Director"}];
-const ROLE_OPTS=[...DELEG,{id:"Additional",label:"Another member of my church's delegation"},{id:"None",label:"Not representing a local church (Presiding Elder, officer or observer)"}];
-const roleShort=id=>({"Christian Education Director":"CE Director","CE Director":"CE Director",None:"Not a church delegate",Additional:"Additional member"})[id]||roleLabel(id);
+const ROLE_OPTS=[...DELEG,{id:"Additional",label:"Another member of my church's delegation"},{id:"Observer",label:"Observer from my church (attending, not a delegate)"},{id:"None",label:"Not from a local church delegation (Presiding Elder, District or Conference officer)"}];
+const roleShort=id=>({"Christian Education Director":"CE Director","CE Director":"CE Director",None:"Not a church delegate",Additional:"Additional member",Observer:"Observer from the church"})[id]||roleLabel(id);
 const roleLabel=id=>(ROLE_OPTS.find(r=>r.id===id)||{label:id||"Not given"}).label;
 const delegOn=()=>!LIVE||CONFIG.DELEG_LIVE;
 const nrm=s=>String(s||"").toLowerCase().replace(/\ba\.m\.e\.?/g," ").replace(/\bame\b/g," ").replace(/\bchurch\b/g," ").replace(/\bmt\b\.?/g,"mount ").replace(/[^a-z0-9]+/g," ").trim();
@@ -1192,7 +1192,7 @@ function sparkline(daily){const days=[];const t=new Date();for(let i=20;i>=0;i--
   return `<svg viewBox="0 0 ${w} ${h}" class="spark" preserveAspectRatio="none"><polyline points="0,${h} ${pts} ${w},${h}" class="sp-a"/><polyline points="${pts}" class="sp-l"/></svg>`}
 function feedText2(x,who){const ago=m=>m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" d ago";
   return `<b>${esc(who)}</b> from <b>${esc(x.church||x.district||shortConf(x.conference))}</b>${x.church&&x.district?`, ${esc(x.district)}`:""} <span>${ago(Math.round((Date.now()-new Date(x.at))/60000))}</span>`}
-function feedText(x){const who=x.cat==="Bishop"?"The Bishop":x.cat==="Presiding Elder"?"A Presiding Elder":x.cat&&!/Pastor|Other clergy/.test(x.cat)&&x.role!=="Pastor"?"A "+x.cat.replace("Itinerant","itinerant").replace("Local","local").replace("Supernumerary Preacher","supernumerary preacher").replace("Superannuated Preacher","superannuated preacher"):x.role&&x.role!=="None"&&x.role!=="Additional"?(x.role==="Pastor"?"A pastor":"A "+roleShort(x.role).replace("Adult delegate","adult delegate").replace("Youth delegate","youth delegate").replace("CE Director","Christian Education Director")):x.type==="Clergy"?"A member of the clergy":x.type==="Observer"?"An observer":"A delegate";
+function feedText(x){const who=x.cat==="Bishop"?"The Bishop":x.cat==="Presiding Elder"?"A Presiding Elder":x.cat&&!/Pastor|Other clergy/.test(x.cat)&&x.role!=="Pastor"?"A "+x.cat.replace("Itinerant","itinerant").replace("Local","local").replace("Supernumerary Preacher","supernumerary preacher").replace("Superannuated Preacher","superannuated preacher"):x.role&&x.role!=="None"&&x.role!=="Additional"&&x.role!=="Observer"?(x.role==="Pastor"?"A pastor":"A "+roleShort(x.role).replace("Adult delegate","adult delegate").replace("Youth delegate","youth delegate").replace("CE Director","Christian Education Director")):x.type==="Clergy"?"A member of the clergy":x.type==="Observer"?"An observer":"A delegate";
   {let w=who.replace(/^A (itinerant|local) (Deacon|Elder)/,(m,x,y)=>"A "+x+" "+y.toLowerCase()).replace(/^A ([aeiouAEIOU])/,"An $1");if(w!==who)return feedText2(x,w)}
   const ago=m=>m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" d ago";
   return `<b>${esc(who)}</b> from <b>${esc(x.church||x.district||shortConf(x.conference))}</b>${x.church&&x.district?`, ${esc(x.district)}`:""} <span>${ago(Math.round((Date.now()-new Date(x.at))/60000))}</span>`}
