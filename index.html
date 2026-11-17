@@ -695,7 +695,7 @@ const nrm=s=>String(s||"").toLowerCase().replace(/\ba\.m\.e\.?/g," ").replace(/\
 const nrmD=s=>nrm(s).replace(/\bdistrict\b/g," ").replace(/^the\s+/," ").replace(/\s+/g," ").trim();
 const roleOf=r=>r.role||(/pastor/i.test(r.designation||"")&&!/presiding/i.test(r.designation||"")?"Pastor":"");
 /* names people type for a church on our list, confirmed by Rev. Moremi; only used when the district they chose agrees */
-const CH_ALIAS=[[/^the ark\b/i,"Capital District","The Ark AME Church, Ekangala"],[/anna senatle/i,"Capital District","Anna Senatle AME Church, Allemansedrift"],[/^emm?anuel\b/i,"Capital District","Emmanuel A.M.E. Church, Boitekong"],[/mabote.*(ventersburg|\(v\))/i,"Kroonstad District","Mabote (V) AME Church"],[/new bethel/i,"North End District","New Bethel"],[/^a\.?\s?m\.?\s?m\b/i,"Springs District","Amission Mokoena AME Church"],[/john e\.? hunter/i,"Ga-Rankuwa District","John E. Hunter Memorial"]];
+const CH_ALIAS=[[/^the ark\b/i,"Capital District","The Ark AME Church, Ekangala"],[/anna senatle/i,"Capital District","Anna Senatle AME Church, Allemansedrift"],[/^emm?anuel\b/i,"Capital District","Emmanuel A.M.E. Church, Boitekong"],[/mabote.*(ventersburg|\(v\))/i,"Kroonstad District","Mabote (V) AME Church"],[/new bethel/i,"North End District","New Bethel"],[/diepsloot/i,"DS Modisapodi District","AME Church, Diepsloot"],[/^g\.?\s?d\.?\s?robinson/i,"DS Modisapodi District","GD Robinson Temple AME Church"],[/^z\.?\s?s\.?\s?mthembu/i,"Highveld District","ZS Mthembu Temple AME Church"],[/^nkosi memorial/i,"Capital District","Nkosi Memorial AME Church, Tlhabane"],[/nduna memorial/i,"Ga-Rankuwa District","W.N. Nduna Memorial"],[/^bethel\b.*ramokgopa/i,"Polokwane District","Bethel, Polokwane"],[/^monts?h?ioa/i,"Mmabatho District","Montshioa Chapel AME Church"],[/^a\.?\s?m\.?\s?m\b/i,"Springs District","Amission Mokoena AME Church"],[/john e\.? hunter/i,"Ga-Rankuwa District","John E. Hunter Memorial"]];
 const KNOWN=(()=>{const out=[],seen=new Set();
   const add=(c,d,cf)=>{if(!c||!cf)return;const parts=/ and /.test(c)&&/ AME Church$/.test(c)?c.replace(/ AME Church$/,"").split(" and ").map(x=>x.trim()+" AME Church"):[c];
     parts.forEach(ch=>{const k=cf+"|"+nrmD(d)+"|"+nrm(ch);if(!seen.has(k)){seen.add(k);out.push({church:ch,district:d,conference:cf})}})};
@@ -727,9 +727,11 @@ function canonChurch(r){const cf=r.conference||"",nc=nrm(r.church);if(!nc||!cf)r
   /* a loose spelling only counts when it agrees with the district they chose */
   /* a Presiding Elder (and the spouse) is placed in the district he or she presides over, even when the home church is elsewhere */
   const lead=typeof isPE==="function"&&(isPE(r)||isConsultant(r));
-  let clash=false;if(k&&td&&nrmD(k.district)!==nrmD(td)){if(!exact&&!lead){k=null}else clash=true}
+  /* a Presiding Elder on our list is placed in the district he or she presides over, whatever district was typed */
+  let pd=td;if(lead&&isPE(r)){try{const m=ROSTER.pe.find(p=>p.conference===cf&&surnLike(nameKey("",p.surname),nameKey("",r.surname))&&firstToks(p).some(t=>firstToks(r).some(u=>surnLike(t,u))));if(m&&m.district)pd=m.district}catch(e){}}
+  let clash=false;if(k&&pd&&nrmD(k.district)!==nrmD(pd)){if(!exact&&!lead){k=null}else clash=true}
   const church=k?k.church:r.church;
-  const pe=clash&&lead;const district=pe?td:k?k.district:(td||"");
+  const pe=clash&&lead;const district=pe?pd:k?k.district:(pd||"");
   /* the PE counts in the district he presides over, but his home church stays a church of its own district */
   return{key:cf+"|"+nrmD(pe?k.district:district)+"|"+nrm(church),church,district,conference:cf,known:!!k,exact,clash:clash&&!pe,typedDistrict:td,homeDistrict:pe?k.district:""}}
 function tidyBanner(all){const n=tidyPlan(all).length;return n?`<section class="panel" style="border-left:6px solid var(--brass)"><div class="row" style="justify-content:space-between;align-items:center"><div><h3 style="margin:0">Tidy the registrations</h3><p class="small muted" style="margin:4px 0 0">${n} registrations have names in capitals or small letters, or a district typed wrongly. One press puts them right in the Sheet. Church names are not changed.</p></div><button class="brass" id="tidyall">Tidy ${n} registrations</button></div></section>`:""}
