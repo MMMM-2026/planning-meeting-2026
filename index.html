@@ -188,6 +188,33 @@ body.ddark{background:#12061e}body.ddark #app~*{color:#b6a5cb}
 .doc{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line)}.doc:first-of-type{border-top:0}.doc>div:first-child{display:flex;flex-direction:column;gap:2px}.doc .row button,.doc .row .btn{padding:7px 12px;font-size:14px;width:auto;margin:0}
 #docov{position:fixed;inset:0;z-index:50;background:#0d1322;display:flex;flex-direction:column}#docov .dov-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;color:#fff;background:#151c2e}#docov .dov-bar>div:first-child{display:flex;flex-direction:column;min-width:0}#docov .dov-bar b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#docov .dov-bar .btn,#docov .dov-bar button{padding:7px 12px;font-size:14px;width:auto;margin:0;color:#fff !important;border-color:rgba(255,255,255,.4);background:transparent}#docov iframe{flex:1;border:0;width:100%;background:#fff}
 #nowbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:40;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 16px;border-radius:14px;border:0;background:#151c2e;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.35);width:auto;margin:0}#nowbar span:first-child{font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
+
+/* dazzle */
+.dhero h1{background-size:200% 100%!important;animation:shine 6s ease-in-out infinite}
+.dhero h1{background-image:linear-gradient(100deg,#c79a3a 0%,#f3d38a 30%,#fffbe9 45%,#f3d38a 60%,#c79a3a 100%)!important}
+@keyframes shine{0%,100%{background-position:100% 0}50%{background-position:0 0}}
+.dhalo{position:relative;width:min(360px,78vw);aspect-ratio:1;margin:6px auto 4px;display:grid;place-items:center}
+.dhalo::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 8%,#f3d38a 18%,#fff7df 22%,transparent 34%,transparent 58%,#c79a3a 70%,#fff0c2 74%,transparent 86%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));animation:spin 7s linear infinite;filter:drop-shadow(0 0 14px rgba(243,211,138,.8))}
+.dhalo::after{content:"";position:absolute;inset:18px;border-radius:50%;border:1px dashed rgba(243,211,138,.35);animation:spin 40s linear infinite reverse}
+.dhalo .core{position:absolute;inset:30px;border-radius:50%;background:radial-gradient(circle at 50% 35%,rgba(243,211,138,.22),rgba(42,11,69,.6) 70%);box-shadow:inset 0 0 40px rgba(243,211,138,.25),0 0 80px rgba(224,182,90,.25);animation:breathe 4s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+.dhalo .in{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center}
+.dhalo .in b{font-family:var(--f-display);font-weight:900;font-size:clamp(64px,13vw,120px);line-height:.95;background:linear-gradient(180deg,#fffbe9,#f3d38a 55%,#c79a3a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 18px rgba(243,211,138,.45))}
+.dhalo .in span{font:700 13px var(--f-cap);letter-spacing:.22em;text-transform:uppercase;color:#e8c27a;margin-top:6px}
+.dhalo .in small{color:#d9c6ee;font-size:13px;margin-top:4px}
+.dclock{display:flex;justify-content:center;gap:clamp(8px,2vw,16px);margin:4px auto 0}
+.dclock div{min-width:clamp(64px,14vw,104px);padding:12px 8px 10px;border-radius:16px;text-align:center;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02));border:1px solid rgba(232,194,122,.4);box-shadow:0 12px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.12)}
+.dclock b{display:block;font:900 clamp(30px,6vw,54px)/1 var(--f-display);color:#f3d38a;font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(243,211,138,.45)}
+.dclock span{font:700 11px var(--f-cap);letter-spacing:.18em;text-transform:uppercase;color:#d9c6ee}
+.dclock .tick{animation:tick .5s ease-out}@keyframes tick{from{transform:translateY(-6px);opacity:.3}to{transform:none;opacity:1}}
+.dconfs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}.dconfs span{padding:7px 14px;border-radius:999px;border:1px solid rgba(232,194,122,.45);font:700 12px var(--f-cap);letter-spacing:.12em;text-transform:uppercase;color:#fff3d6;background:rgba(0,0,0,.2);animation:rise .7s both}
+.dticker{position:relative;overflow:hidden;border-radius:14px;border:1px solid rgba(232,194,122,.35);background:rgba(0,0,0,.28);padding:10px 0;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.dticker .tr{display:flex;gap:40px;width:max-content;animation:marq 45s linear infinite;white-space:nowrap;font-size:15px}.dticker .tr span{color:#f3edf9}.dticker .tr span::before{content:"✦ ";color:#e8c27a}.dticker .tr span span{color:#b6a5cb;font-size:12px}.dticker .tr span span::before{content:""}
+@keyframes marq{to{transform:translateX(-50%)}}
+.dfx{position:fixed;inset:0;pointer-events:none;z-index:30}
+.dwelcome{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:31;color:#2a0b45!important;-webkit-text-fill-color:#2a0b45;padding:16px 28px;border-radius:18px;background:linear-gradient(180deg,#fff0c2,#d4a24c);color:#2a0b45;font:900 clamp(20px,3vw,30px) var(--f-display);box-shadow:0 0 60px rgba(243,211,138,.7);animation:pop 3.2s both;text-align:center}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,20px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.05)}20%{transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-10px)}}
+@media (prefers-reduced-motion:reduce){.dhero h1,.dhalo::before,.dhalo::after,.dhalo .core,.dticker .tr,.dconfs span{animation:none}}
 </style>
 </head>
 <body>
@@ -1115,6 +1142,14 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-invite]");
 /* ============ DASHBOARD ============ */
 let dashTimer=null,dashRaf=null;
 const OPENS=new Date("2026-12-03T00:00:00+02:00");
+function clockHtml(){const ms=Math.max(0,OPENS-Date.now()),d=Math.floor(ms/864e5),h=Math.floor(ms/36e5)%24,m=Math.floor(ms/6e4)%60,x=Math.floor(ms/1e3)%60,p=n=>String(n).padStart(2,"0");
+  return [[d,"Days"],[p(h),"Hours"],[p(m),"Minutes"],[p(x),"Seconds"]].map(([v,l])=>`<div><b data-l="${l}">${v}</b><span>${l}</span></div>`).join("")}
+function tickClock(){const c=$("#dclock");if(!c)return;const t=document.createElement("div");t.innerHTML=clockHtml();t.querySelectorAll("b").forEach(b=>{const o=c.querySelector(`b[data-l="${b.dataset.l}"]`);if(o&&o.textContent!==b.textContent){o.textContent=b.textContent;o.classList.remove("tick");void o.offsetWidth;o.classList.add("tick")}})}
+function burst(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const cv=document.createElement("canvas");cv.className="dfx";document.body.appendChild(cv);const c=cv.getContext("2d"),W=cv.width=innerWidth*devicePixelRatio,H=cv.height=innerHeight*devicePixelRatio;
+  const cols=["#fff7df","#f3d38a","#e0b65a","#c79a3a","#ffffff","#b98ce0"],P=Array.from({length:160},()=>{const a=Math.random()*Math.PI*2,v=(Math.random()*9+4)*devicePixelRatio;return{x:W/2,y:H*.32,vx:Math.cos(a)*v,vy:Math.sin(a)*v-6*devicePixelRatio,s:(Math.random()*5+3)*devicePixelRatio,r:Math.random()*6,c:cols[Math.random()*cols.length|0],l:1}});
+  const t0=performance.now();const f=t=>{c.clearRect(0,0,W,H);P.forEach(p=>{p.vy+=.25*devicePixelRatio;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=.15;p.l-=.006;c.globalAlpha=Math.max(0,p.l);c.fillStyle=p.c;c.save();c.translate(p.x,p.y);c.rotate(p.r);c.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);c.restore()});if(t-t0<3200)requestAnimationFrame(f);else cv.remove()};requestAnimationFrame(f)}
+function welcomeBurst(n){burst();const w=document.createElement("div");w.className="dwelcome";w.innerHTML=n>1?`${n} more have registered!<br><small style="font-size:.6em">Welcome to Ebenezer</small>`:`Another one has registered!<br><small style="font-size:.6em">Welcome to Ebenezer</small>`;document.body.appendChild(w);setTimeout(()=>w.remove(),3300)}
+let dashLast=null,clockTimer=null;
 function dashCount(el,to){const from=+el.dataset.v||0;el.dataset.v=to;if(matchMedia("(prefers-reduced-motion: reduce)").matches){el.textContent=to.toLocaleString("en-ZA");return}const t0=performance.now(),d=1200;
   const step=t=>{const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=Math.round(from+(to-from)*e).toLocaleString("en-ZA");if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
 function arc(cx,cy,r,a0,a1){const p=a=>[cx+r*Math.cos(a),cy+r*Math.sin(a)];const[x0,y0]=p(a0),[x1,y1]=p(a1);return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${a1-a0>Math.PI?1:0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`}
@@ -1128,7 +1163,10 @@ function gauge(label,n,of){const k=of?Math.min(1,n/of):0,r=38,c=2*Math.PI*r;retu
 function sparkline(daily){const days=[];const t=new Date();for(let i=20;i>=0;i--){const d=new Date(t);d.setDate(t.getDate()-i);const k=d.toISOString().slice(0,10);days.push(daily[k]||0)}
   const m=Math.max(1,...days),w=300,h=60,pts=days.map((v,i)=>`${(i*w/(days.length-1)).toFixed(1)},${(h-4-(v/m)*(h-12)).toFixed(1)}`).join(" ");
   return `<svg viewBox="0 0 ${w} ${h}" class="spark" preserveAspectRatio="none"><polyline points="0,${h} ${pts} ${w},${h}" class="sp-a"/><polyline points="${pts}" class="sp-l"/></svg>`}
+function feedText2(x,who){const ago=m=>m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" d ago";
+  return `<b>${esc(who)}</b> from <b>${esc(x.church||x.district||shortConf(x.conference))}</b>${x.church&&x.district?`, ${esc(x.district)}`:""} <span>${ago(Math.round((Date.now()-new Date(x.at))/60000))}</span>`}
 function feedText(x){const who=x.cat==="Bishop"?"The Bishop":x.cat==="Presiding Elder"?"A Presiding Elder":x.cat&&!/Pastor|Other clergy/.test(x.cat)&&x.role!=="Pastor"?"A "+x.cat.replace("Itinerant","itinerant").replace("Local","local").replace("Supernumerary Preacher","supernumerary preacher").replace("Superannuated Preacher","superannuated preacher"):x.role&&x.role!=="None"&&x.role!=="Additional"?(x.role==="Pastor"?"A pastor":"A "+roleShort(x.role).replace("Adult delegate","adult delegate").replace("Youth delegate","youth delegate").replace("CE Director","Christian Education Director")):x.type==="Clergy"?"A member of the clergy":x.type==="Observer"?"An observer":"A delegate";
+  {let w=who.replace(/^A (itinerant|local) (Deacon|Elder)/,(m,x,y)=>"A "+x+" "+y.toLowerCase()).replace(/^A ([aeiouAEIOU])/,"An $1");if(w!==who)return feedText2(x,w)}
   const ago=m=>m<1?"just now":m<60?m+" min ago":m<1440?Math.round(m/60)+" h ago":Math.round(m/1440)+" d ago";
   return `<b>${esc(who)}</b> from <b>${esc(x.church||x.district||shortConf(x.conference))}</b>${x.church&&x.district?`, ${esc(x.district)}`:""} <span>${ago(Math.round((Date.now()-new Date(x.at))/60000))}</span>`}
 function stars(cv){const c=cv.getContext("2d");let W,H,P=[];const fit=()=>{W=cv.width=cv.offsetWidth*devicePixelRatio;H=cv.height=cv.offsetHeight*devicePixelRatio;P=Array.from({length:Math.round(W*H/9000)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+.3,v:Math.random()*.25+.05,t:Math.random()*6}))};fit();
@@ -1144,11 +1182,15 @@ async function viewDashboard(){clearInterval(dashTimer);cancelAnimationFrame(das
   $("#dbig").onclick=()=>{const d=$("#dash");d.classList.toggle("big");try{if(d.classList.contains("big"))d.requestFullscreen&&d.requestFullscreen();else document.fullscreenElement&&document.exitFullscreen()}catch(e){}$("#dbig").textContent=d.classList.contains("big")?"Leave big screen":"Big screen"};
   const load=async()=>{if(!$("#dbody")){clearInterval(dashTimer);cancelAnimationFrame(dashRaf);return}
     let st;try{st=await api("publicStats")}catch(e){st=null}
-    if(!st||!st.conf){$("#dbody").innerHTML=`<section class="dcard dcount"><b>${days}</b><span>days until the Congress opens</span></section><p class="dwait">Live figures appear here once registration data is connected.</p>`;return}
+    if(!st||!st.conf){$("#dbody").innerHTML=`<section class="dcard dcount"><h3>The Congress opens in</h3><div class="dclock" id="dclock">${clockHtml()}</div><div class="dconfs">${["Natal","East","Orangia","West","M.M. Mokone Memorial"].map((c,i)=>`<span style="animation-delay:${.2+i*.15}s">${c}</span>`).join("")}</div><p class="dsub" style="margin-top:12px">Five conferences, one District, gathering at Ebenezer</p></section>`;return}
     let churches=0,complete=0;Object.values(st.conf).forEach(x=>{churches+=x.churches;complete+=x.complete});const known=KNOWN.length;
     const dl=rankDistricts(st.dist).slice(0,3),aux=Object.entries(st.aux||{}).sort((a,b)=>b[1]-a[1]),am=aux.length?aux[0][1]:1;
     const pod=[dl[1],dl[0],dl[2]];
+    const rec=(st.recent||[]).slice(0,12).map(x=>`<span>${feedText(x)}</span>`).join("");
     $("#dbody").innerHTML=`
+      <section class="dhalo"><div class="core"></div><div class="in"><b class="cnt" data-to="${st.total}">0</b><span>Registered</span><small>and counting</small></div></section>
+      <div class="dclock" id="dclock">${clockHtml()}</div>
+      ${rec?`<div class="dticker"><div class="tr">${rec}${rec}</div></div>`:""}
       <div class="dgrid">
         <section class="dcard dcrown">${crownSvg(st)}<p class="dsub">Churches registered in each conference</p></section>
         <div class="dcol">
@@ -1163,8 +1205,9 @@ async function viewDashboard(){clearInterval(dashTimer);cancelAnimationFrame(das
         <section class="dcard"><h3>Auxiliaries on the march</h3>${aux.length?aux.map(([k,n],i)=>`<div class="banner"><span>${i<3?["&#9733;","&#9734;","&#9734;"][i]+" ":""}${esc(k)}</span><div><i style="width:${Math.round(n/am*100)}%"></i></div><b>${n}</b></div>`).join(""):`<p class="dwait">Auxiliaries appear as members register.</p>`}</section>
       </div>
       <section class="dcard"><h3>Just registered</h3><div class="feed">${(st.recent||[]).slice(0,8).map(x=>`<div class="fi">${feedText(x)}</div>`).join("")||'<p class="dwait">Be the first.</p>'}</div></section>`;
-    document.querySelectorAll(".cnt").forEach(e=>dashCount(e,+e.dataset.to));const dt=$("#dtot");if(dt)dashCount(dt,st.total)};
-  await load();dashTimer=setInterval(load,60000)}
+    document.querySelectorAll(".cnt").forEach(e=>dashCount(e,+e.dataset.to));const dt=$("#dtot");if(dt)dashCount(dt,st.total);
+    if(dashLast!==null&&st.total>dashLast)welcomeBurst(st.total-dashLast);dashLast=st.total};
+  dashLast=null;await load();dashTimer=setInterval(load,60000);clearInterval(clockTimer);clockTimer=setInterval(()=>{if(!$("#dclock")){clearInterval(clockTimer);return}tickClock()},1000)}
 window.addEventListener("hashchange",()=>{if(location.hash!=="#dashboard"){clearInterval(dashTimer);cancelAnimationFrame(dashRaf);document.body.classList.remove("ddark")}});
 
 /* ============ STATUS CARD ============ */
