@@ -297,6 +297,11 @@ function assignBay(parks,clergy){
 }
 
 async function api(action,p={}){
+  if(LIVE&&(action==="publicStats"||action==="churchStatus")){
+    /* the script sends the public rows (no phone, email or code); the figures are worked out here, the same way as the back room */
+    const r=await fetch(CONFIG.API_URL,{method:"POST",body:JSON.stringify({action:"publicRows"})});
+    const j=await r.json();if(!j.ok)throw new Error(j.error||"Something went wrong");
+    return action==="publicStats"?publicStatsOf(j.data):churchStatusOf(j.data,p.key)}
   if(LIVE){
     const r=await fetch(CONFIG.API_URL,{method:"POST",body:JSON.stringify({action,...p})});
     const j=await r.json();if(!j.ok)throw new Error(j.error||"Something went wrong");return j.data;
