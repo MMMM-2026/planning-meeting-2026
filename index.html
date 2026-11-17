@@ -445,6 +445,7 @@ function viewRegister(){
         <label for="church">Church <span class="hint">· its full name</span><input id="church" list="churchlist" placeholder="e.g. DM Robinson AME Church"></label>
         <label for="place">Town or township <span class="hint">· where the church is</span><input id="place" placeholder="e.g. Saulsville"></label>
       </div>
+      <div id="csug"></div>
       <datalist id="churchlist">${CHURCHES.map(c=>`<option>${esc(c)}</option>`).join("")}</datalist>
       <datalist id="districtlist">${DISTRICTS.map(c=>`<option>${esc(c)}</option>`).join("")}</datalist>
       <div class="grid2">
@@ -500,7 +501,12 @@ function viewRegister(){
     if(!roNone){const c=canonChurch(data);
       if(!c||!c.district){$("#district").focus();return fail(`Please choose your district from the list. "${data.district}" is not a district, and we cannot find ${data.church} in the ${shortConf(data.conference)} list.`)}
       if(!DISTS(data.conference).some(d=>nrmD(d)===nrmD(c.district))&&window._dWarn!==data.conference+c.district){window._dWarn=data.conference+c.district;$("#district").focus();return fail(`We do not find ${c.district} in the ${shortConf(data.conference)} list. Please check the district and the conference. If it is correct, press Register again.`)}
-      data.district=c.district}
+      data.district=c.district;
+      if(!c.known&&window._chOk!==nrm(data.church)){const sg=churchSuggest(data.church,data.conference,data.district),box=$("#csug");
+        box.innerHTML=`<div class="note" style="text-align:left;border-left:4px solid var(--brass)"><b>We do not find "${esc(v("church"))}" on our list of ${esc(shortConf(data.conference))} churches.</b>${sg.length?`<br><span class="small">Did you mean one of these? Tap your church.</span><div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">${sg.map((k,i)=>`<button type="button" class="ghost" data-sg="${i}" style="text-align:left;padding:10px 12px"><b>${esc(k.church)}</b><br><span class="small muted">${esc(k.district)}</span></button>`).join("")}</div>`:""}<button type="button" class="ghost" data-sgno style="margin-top:8px;width:100%">My church is not on the list, keep what I typed</button></div>`;
+        box.querySelectorAll("[data-sg]").forEach(b=>b.onclick=()=>{const k=sg[+b.dataset.sg];$("#church").value=k.church;$("#district").value=k.district;if(/,/.test(k.church))$("#place").value="";box.innerHTML="";er.hidden=true;$("#church").dispatchEvent(new Event("change"));toast("Church chosen. Press Register.")});
+        box.querySelector("[data-sgno]").onclick=()=>{window._chOk=nrm(data.church);box.innerHTML="";er.hidden=true;toast("Thank you. Press Register.")};
+        box.scrollIntoView({behavior:"smooth",block:"center"});return fail("Please check your church name above.")}}
     if(!/^\S+@\S+\.\S+$/.test(data.email))return fail("Please check the email address.");
     if(digits(data.mobile).length<9)return fail("Please check the mobile number.");
     if(!data.type)return fail("Please choose a registration type.");
@@ -696,6 +702,12 @@ const nrmD=s=>nrm(s).replace(/\bdistrict\b/g," ").replace(/^the\s+/," ").replace
 const roleOf=r=>r.role||(/pastor/i.test(r.designation||"")&&!/presiding/i.test(r.designation||"")?"Pastor":"");
 /* names people type for a church on our list, confirmed by Rev. Moremi; only used when the district they chose agrees */
 const CH_ALIAS=[[/^the ark\b/i,"Capital District","The Ark AME Church, Ekangala"],[/anna senatle/i,"Capital District","Anna Senatle AME Church, Allemansedrift"],[/^emm?anuel\b/i,"Capital District","Emmanuel A.M.E. Church, Boitekong"],[/mabote.*(ventersburg|\(v\))/i,"Kroonstad District","Mabote (V) AME Church"],[/new bethel/i,"North End District","New Bethel"],[/diepsloot/i,"DS Modisapodi District","AME Church, Diepsloot"],[/^g\.?\s?d\.?\s?robinson/i,"DS Modisapodi District","GD Robinson Temple AME Church"],[/^z\.?\s?s\.?\s?mthembu/i,"Highveld District","ZS Mthembu Temple AME Church"],[/^nkosi memorial/i,"Capital District","Nkosi Memorial AME Church, Tlhabane"],[/^(dr\.?\s*)?w(ilfred)?\.?\s*n(oel)?\.?\s*nduna/i,"Ga-Rankuwa District","Dr. Wilfred Noel Nduna Memorial AME Church, Letlhabile"],[/nduna memorial/i,"Ga-Rankuwa District","Dr. Wilfred Noel Nduna Memorial AME Church, Letlhabile"],[/^bethel\b.*ramokgopa/i,"Polokwane District","Bethel, Polokwane"],[/^monts?h?ioa/i,"Mmabatho District","Montshioa Chapel AME Church"],[/^a\.?\s?m\.?\s?m\b/i,"Springs District","Amission Mokoena AME Church"],[/john e\.? hunter/i,"Ga-Rankuwa District","John E. Hunter Memorial"]];
+/* when a church typed is not on our list, offer the closest churches on the list */
+function churchSuggest(typed,cf,dist){const stop=["ame","amec","church","chapel","temple","memorial","circuit","the","a","m","e"];
+  const a=chToks(typed).filter(w=>!stop.includes(w));if(!a.length||!cf)return[];
+  return KNOWN.filter(k=>k.conference===cf).map(k=>{const b=chToks(k.church);let s=0;
+    a.forEach(w=>{if(b.includes(w))s+=2;else if(w.length>=4&&b.some(x=>x.length>=4&&lev(w,x)<=1))s+=1.5;else if(w.length>=3&&b.some(x=>x.length>=3&&(x.startsWith(w)||w.startsWith(x))))s+=1});
+    if(s&&dist&&nrmD(k.district)===nrmD(canonDistrict(cf,dist)||dist))s+=1.5;return{k,s}}).filter(x=>x.s>=2).sort((x,y)=>y.s-x.s).slice(0,3).map(x=>x.k)}
 const KNOWN=(()=>{const out=[],seen=new Set();
   const add=(c,d,cf)=>{if(!c||!cf)return;const parts=/ and /.test(c)&&/ AME Church$/.test(c)?c.replace(/ AME Church$/,"").split(" and ").map(x=>x.trim()+" AME Church"):[c];
     parts.forEach(ch=>{const k=cf+"|"+nrmD(d)+"|"+nrm(ch);if(!seen.has(k)){seen.add(k);out.push({church:ch,district:d,conference:cf})}})};
