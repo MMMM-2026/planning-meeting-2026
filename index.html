@@ -216,6 +216,7 @@ body.ddark{background:#12061e}body.ddark #app~*{color:#b6a5cb}
 .dwelcome{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:31;color:#2a0b45!important;-webkit-text-fill-color:#2a0b45;padding:16px 28px;border-radius:18px;background:linear-gradient(180deg,#fff0c2,#d4a24c);color:#2a0b45;font:900 clamp(20px,3vw,30px) var(--f-display);box-shadow:0 0 60px rgba(243,211,138,.7);animation:pop 3.2s both;text-align:center}
 @keyframes pop{0%{opacity:0;transform:translate(-50%,20px) scale(.8)}12%{opacity:1;transform:translate(-50%,0) scale(1.05)}20%{transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-10px)}}
 @media (prefers-reduced-motion:reduce){.dhero h1,.dhalo::before,.dhalo::after,.dhalo .core,.dticker .tr,.dconfs span{animation:none}}
+.rdtext sup.vn,.fsx sup.vn{font-size:.6em;color:var(--brass);font-weight:700;margin:0 2px 0 4px}
 </style>
 </head>
 <body>
@@ -692,10 +693,48 @@ async function viewPass(code){
 }
 
 /* ============ WORSHIP ============ */
-function viewWorship(){
-  app(shell(`<section class="panel"><h2>Worship</h2>
-    ${CONFIG.WORSHIP_URL?`<a class="btn" href="${esc(CONFIG.WORSHIP_URL)}">Open the order of worship</a>`:`<p>The order of worship for each session will appear here closer to the meeting, with the hymns, readings and responses on your phone.</p><p class="small muted">Check back in the week of the meeting.</p>`}
+/* ---------- Worship: the Scripture readings for each session (18 Nov 2026) ---------- */
+const ESV_NOTICE="Scripture quotations marked ESV are from the ESV\u00ae Bible (The Holy Bible, English Standard Version\u00ae), \u00a9 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.";
+let SC_SIZE=(()=>{try{return +localStorage.getItem("pm_sc")||22}catch(e){return 22}})(),SC_OPEN={};
+const scHtml=t=>esc(t).replace(/\[(\d+)\]\s*/g,'<sup class="vn">$1</sup>').replace(/\n\s*\n/g,"</p><p>").replace(/\n/g," ");
+async function viewWorship(){
+  const desk=CAN.regDesk(role());let list=[];try{list=await api("readList",{})}catch(e){}
+  list=list.slice().sort((a,b)=>(+a.order||999)-(+b.order||999)||String(a.created).localeCompare(String(b.created)));
+  const form=r=>`<form class="rdform" data-id="${esc(r?r.id:"")}" style="display:grid;gap:8px;grid-template-columns:1fr 1fr;margin-top:8px">
+      <label>Session<input name="session" value="${esc(r?r.session:"")}" placeholder="e.g. Thursday 3 Dec, Opening Worship"></label>
+      <label>Day and time <span class="hint">· optional</span><input name="when" value="${esc(r?r.when:"")}" placeholder="e.g. Thu 3 Dec, 09h00"></label>
+      <label style="grid-column:1/-1">Reading<input name="ref" value="${esc(r?r.ref:"")}" placeholder="e.g. Isaiah 40:28-31; John 15:1-8"></label>
+      <label>Version<select name="version"><option ${!r||r.version!=="ESV"?"selected":""}>KJV</option><option ${r&&r.version==="ESV"?"selected":""}>ESV</option></select></label>
+      <label>Order <span class="hint">· 1, 2, 3...</span><input name="order" inputmode="numeric" value="${esc(r?r.order:"")}"></label>
+      <div class="row" style="grid-column:1/-1"><button class="brass" type="submit">${r?"Save changes":"Add reading"}</button>${r?`<button type="button" class="ghost" data-rddel="${esc(r.id)}">Remove</button>`:""}</div></form>`;
+  app(shell(`<section class="panel"><span class="eyebrow" style="color:var(--brass)">Worship</span><h2>The Word for each session</h2>
+    <p class="small muted">Tap a reading to open it. Make the letters bigger or smaller with A+ and A\u2212, or show it full screen for the hall.</p>
+    ${CONFIG.WORSHIP_URL?`<a class="btn ghost" href="${esc(CONFIG.WORSHIP_URL)}">Open the order of worship</a>`:""}
+    <div class="row" style="margin:8px 0"><button class="ghost" id="scm" style="padding:6px 14px">A\u2212</button><button class="ghost" id="scp" style="padding:6px 14px">A+</button></div>
+    <div id="rdlist">${list.map(r=>`<article class="rdcard" data-rid="${esc(r.id)}" style="border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:10px 0;background:var(--card)">
+        <button class="rdopen" data-rid="${esc(r.id)}" style="all:unset;cursor:pointer;display:block;width:100%"><span class="small muted">${esc(r.when||"")}</span><b style="display:block;font-size:18px">${esc(r.session)}</b><span style="color:var(--brass);font-weight:700">${esc(r.ref)}</span> <span class="small muted">${esc(r.version)}</span></button>
+        <div class="rdtext" id="rt_${esc(r.id)}" hidden></div>
+        <div class="row" style="margin-top:6px"><button class="ghost rdfull" data-rid="${esc(r.id)}" style="padding:6px 12px" hidden>Full screen</button>${desk?`<details style="width:100%"><summary class="small">Change this reading</summary>${form(r)}</details>`:""}</div></article>`).join("")||'<p class="muted">The readings for each session will appear here closer to the meeting.</p>'}</div>
+    ${desk?`<details style="margin-top:10px" ${list.length?"":"open"}><summary><b>Add a reading</b> <span class="small muted">(registration team)</span></summary>${form(null)}</details>`:""}
+    <p class="small muted" id="esvnote" style="margin-top:14px" ${list.some(r=>r.version==="ESV")?"":"hidden"}>${ESV_NOTICE} <a href="https://www.esv.org" target="_blank" rel="noopener">www.esv.org</a></p>
   </section>`,"worship"));
+  const size=()=>document.querySelectorAll(".rdtext").forEach(e=>e.style.fontSize=SC_SIZE+"px");
+  $("#scm").onclick=()=>{SC_SIZE=Math.max(16,SC_SIZE-2);try{localStorage.setItem("pm_sc",SC_SIZE)}catch(e){}size()};
+  $("#scp").onclick=()=>{SC_SIZE=Math.min(48,SC_SIZE+2);try{localStorage.setItem("pm_sc",SC_SIZE)}catch(e){}size()};
+  const load=async(r,el)=>{el.hidden=false;el.innerHTML='<p class="muted small">Opening the reading...</p>';
+    try{const d=await api("scripture",{ref:r.ref,version:r.version});el.innerHTML=d.passages.map(p=>`<h4 style="margin:10px 0 4px;color:var(--brass)">${esc(p.title)} <span class="small muted">${esc(d.version)}</span></h4><p style="line-height:1.6">${scHtml(p.text)}</p>`).join("");size();
+      document.querySelector(`.rdfull[data-rid="${r.id}"]`).hidden=false}
+    catch(e){el.innerHTML=`<p class="err">${esc(e.message)}</p>`}};
+  document.querySelectorAll(".rdopen").forEach(b=>b.onclick=()=>{const r=list.find(x=>x.id===b.dataset.rid),el=$("#rt_"+r.id);if(!el.hidden&&el.innerHTML){el.hidden=true;return}load(r,el)});
+  document.querySelectorAll(".rdfull").forEach(b=>b.onclick=()=>{const r=list.find(x=>x.id===b.dataset.rid),src=$("#rt_"+r.id);
+    const ov=document.createElement("div");ov.style.cssText="position:fixed;inset:0;z-index:60;background:#1a0b2e;color:#fff7df;overflow:auto;padding:5vh 6vw";
+    let fz=Math.max(SC_SIZE,34);ov.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px"><b style="color:#f3d38a;font-size:22px">${esc(r.session)}</b><span><button data-z="-" style="background:rgba(255,255,255,.12);color:#fff7df;border:1px solid #f3d38a;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer">A\u2212</button> <button data-z="+" style="background:rgba(255,255,255,.12);color:#fff7df;border:1px solid #f3d38a;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer">A+</button> <button class="brass" data-z="x">Close</button></span></div><div class="fsx" style="font-size:${fz}px;line-height:1.55">${src.innerHTML}</div>${r.version==="ESV"?`<p style="font-size:14px;opacity:.7;margin-top:24px">${ESV_NOTICE} www.esv.org</p>`:""}`;
+    document.body.appendChild(ov);try{ov.requestFullscreen&&ov.requestFullscreen()}catch(e){}
+    ov.onclick=e=>{const z=e.target.dataset&&e.target.dataset.z;if(!z)return;if(z==="x"){try{document.fullscreenElement&&document.exitFullscreen()}catch(x){}ov.remove();return}fz=Math.max(20,Math.min(96,fz+(z==="+"?4:-4)));ov.querySelector(".fsx").style.fontSize=fz+"px"}});
+  document.querySelectorAll(".rdform").forEach(f=>f.onsubmit=async e=>{e.preventDefault();const g=n=>f.elements[n].value.trim();
+    if(!g("session")||!g("ref"))return toast("Please give the session and the reading");
+    try{await api("readSave",{pin:pin(),id:f.dataset.id||"",session:g("session"),when:g("when"),ref:g("ref"),version:g("version"),order:g("order")});toast("Reading saved");viewWorship()}catch(x){toast(x.message)}});
+  document.querySelectorAll("[data-rddel]").forEach(b=>b.onclick=async()=>{if(!confirm("Remove this reading?"))return;try{await api("readDel",{pin:pin(),id:b.dataset.rddel});toast("Removed");viewWorship()}catch(x){toast(x.message)}});
 }
 
 /* ============ CHURCH DELEGATIONS ============ */
