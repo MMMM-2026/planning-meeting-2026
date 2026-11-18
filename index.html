@@ -533,6 +533,7 @@ async function viewTicket(code){
       <p class="small muted">Show this at the registration desk. Save the link so you can open it again.</p>
       ${isPastorReg(r)&&r.church&&!churchComplete(r.church)?`<div class="note" style="text-align:left;border-left:4px solid var(--brass)"><b>Pastor, kindly complete your church's name</b><br><span class="small">Everyone from ${esc(r.church)} is listed under the name you give. We still need ${listJoin(churchNeeds(r.church))}. Write it like this: <i>Darie Mae Robinson Chapel AME Church, Saulsville</i>.</span>${canEdit()?`<div style="margin-top:8px"><a class="btn" href="#edit-${esc(r.code)}">Complete my church's name</a></div>`:""}</div>`:""}
       ${feeBlock(r)}
+      ${delegOn()&&!r.role&&r.church&&canEdit()?`<div class="note" style="text-align:left;border-left:4px solid var(--brass)"><b>Please choose your place in your church's delegation</b><br><span class="small">Each church sends a Pastor, an Adult, a Youth and a Christian Education Director. Tell us which place you fill, so your church's delegation is counted.</span><div style="margin-top:8px"><a class="btn brass" href="#edit-${esc(r.code)}">Choose my place</a></div></div>`:""}
       <div class="row" style="justify-content:center"><button class="ghost" data-copy="${esc(base()+"#ticket-"+r.code)}">Copy ticket link</button>${canEdit()?`<a class="btn ghost" href="#edit-${esc(r.code)}">Correct my details</a>`:""}</div>
     </div>
     <div class="perf"></div>
@@ -1002,6 +1003,7 @@ const REPORTS=[
   {id:"unpaid",label:"Registered, not yet paid",money:1},
   {id:"money",label:"Registration fees by district",money:1},
   {id:"proofs",label:"Proofs of payment",money:1,desk:1},
+  {id:"places",label:"Places in the delegation",deleg:1},
   {id:"churches",label:"Church delegations"},
   {id:"leaders",label:"Leadership: who has and has not registered"},
   {id:"chdetail",label:"Church names: waiting for the pastor"},
@@ -1140,12 +1142,29 @@ function peHead(me,all,proofs){const regs=all.filter(r=>!r.sample),money=CONFIG.
   return `<section class="panel" style="border-left:6px solid var(--brass)"><span class="eyebrow" style="color:var(--brass)">Presiding Elder</span><h2 style="margin:4px 0">${esc(me.district)}</h2><p class="small muted" style="margin:0">${esc(shortConf(me.conference))}${me.name?" · "+esc(me.name):""}. You see only your own district.</p>
     <div class="sumbar" style="margin-top:10px"><div><b>${regs.length}</b><span>registered</span></div>${money?`<div><b>${paid}</b><span>paid</span></div><div><b>${regs.length-paid}</b><span>not yet paid</span></div>`:""}<div><b>${proofs.filter(p=>p.status==="waiting").length}</b><span>proofs waiting</span></div></div>
     ${money?`<p class="small" style="margin:10px 0 0"><b>To send a proof of payment:</b> open <i>Registered, not yet paid</i>, tick the people the payment is for, attach the photo or PDF, and press Send. You can send as many proofs as you need, one for each payment. The registration team checks each proof against the amount and the people ticked, and everyone on it is then marked paid.</p>`:""}
+    ${delegOn()?`<p class="small" style="margin:6px 0 0"><b>Places in the delegation:</b> open <i>Places in the delegation</i> and choose for each person whether they are the Pastor, Adult, Youth or CE Director. It saves at once.</p>`:""}
     ${proofs.length?`<div class="tbl-wrap" style="margin-top:10px"><table><thead><tr><th>Sent</th><th>People</th><th style="text-align:center">Amount</th><th>Proof</th><th>Status</th></tr></thead><tbody>${proofs.slice().reverse().map(p=>popRow(p,all,false)).join("")}</tbody></table></div>`:""}</section>`}
 function proofsHtml(proofs,all){const w=proofs.filter(p=>p.status==="waiting");
   return `<section class="panel"><h2>Proofs of payment</h2><p class="small muted">Sent by the Presiding Elders. Open each proof and check the bank. <b>Confirm</b> marks everyone on it as paid. <b>Return</b> sends it back with a note.</p>
     <div class="sumbar"><div><b>${w.length}</b><span>Waiting to be checked</span></div><div><b>${R(w.reduce((n,p)=>n+Number(p.amount||0),0))}</b><span>Waiting</span></div><div><b>${proofs.filter(p=>p.status==="confirmed").length}</b><span>Confirmed</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Sent</th><th>District</th><th>People</th><th style="text-align:center">Amount</th><th>Proof</th><th>Status</th><th></th></tr></thead><tbody>
     ${proofs.slice().sort((a,b)=>(a.status==="waiting"?0:1)-(b.status==="waiting"?0:1)||String(b.created).localeCompare(String(a.created))).map(p=>popRow(p,all,true)).join("")||'<tr><td colspan="7" class="muted">No proof of payment has been sent yet.</td></tr>'}</tbody></table></div></section>`}
+/* ---------- places in the delegation (18 Nov 2026) ---------- */
+let PL_ONLY=true;
+function placesRows(all){const keep=BR.rep;BR.rep="everyone";const d=brData(all);BR.rep=keep;return d.rows.filter(r=>r.church&&!/\bdistrict\s*$/i.test(String(r.church).trim()))}
+function placesHtml(all){const rows=placesRows(all),todo=rows.filter(r=>!r.role),show=(PL_ONLY?todo:rows).slice().sort((a,b)=>(churchShown(a)||"").localeCompare(churchShown(b)||"")||fullName(a).localeCompare(fullName(b)));
+  const opt=r=>`<select class="plsel" data-code="${esc(r.code)}" style="min-width:180px"><option value="">Not chosen yet</option>${ROLE_OPTS.map(o=>`<option value="${o.id}" ${o.id===r.role?"selected":""}>${esc(o.label)}</option>`).join("")}</select>`;
+  return `<section class="panel"><h2>Places in the delegation</h2><p class="small muted">Each church sends a Pastor, an Adult, a Youth and a Christian Education Director. Choose each person's place: it saves at once. Those who registered before 17 November were not asked, so their place is still open. <b>Ask</b> sends the person a WhatsApp to choose it themselves.</p>
+    <div class="sumbar"><div><b>${rows.length}</b><span>Registered</span></div><div><b>${rows.length-todo.length}</b><span>Place chosen</span></div><div><b>${todo.length}</b><span>Not chosen yet</span></div></div>
+    <label class="small" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="plonly" ${PL_ONLY?"checked":""} style="width:auto"> Show only those without a place</label>
+    <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Church</th><th>Type</th><th>Place in the delegation</th><th></th></tr></thead><tbody>
+    ${show.map(r=>`<tr><td>${esc(fullName(r))}<br><span class="small muted">${esc(r.designation||"")}</span></td><td>${esc(churchShown(r)||r.church)}<br><span class="small muted">${esc(r.district||"")}</span></td><td>${esc(r.type||"")}</td><td>${opt(r)}</td><td>${!r.role&&r.mobile?`<button class="ghost" data-plask="${esc(r.code)}" style="padding:6px 10px">Ask</button>`:""}</td></tr>`).join("")||'<tr><td colspan="5" class="muted">Everyone here has a place.</td></tr>'}</tbody></table></div></section>`}
+function bindPlaces(all){const o=$("#plonly");if(o)o.onchange=()=>{PL_ONLY=o.checked;viewBackroom()};
+  document.querySelectorAll(".plsel").forEach(sl=>sl.onchange=async()=>{const r=all.find(x=>x.code===sl.dataset.code);sl.disabled=true;
+    try{await api("setRole",{pin:pin(),code:r.code,role:sl.value,churchKey:keyOf(r)});r.role=sl.value;toast(fullName(r)+": "+(sl.value?roleLabel(sl.value):"place cleared"))}catch(e){toast(e.message)}sl.disabled=false});
+  document.querySelectorAll("[data-plask]").forEach(b=>b.onclick=()=>{const r=all.find(x=>x.code===b.dataset.plask),n=waNum(r.mobile);if(digits(n).length<11)return toast("No WhatsApp number for "+fullName(r));
+    const t=`Greetings ${fullName(r)},\n\nThank you for registering for the ${CONFIG.EVENT}.\n\nEach church sends a Pastor, an Adult delegate, a Youth delegate and a Christian Education Director. Kindly tell us which place you fill for ${churchShown(r)||r.church}. It takes one minute: open your ticket, tap "Choose my place", enter the mobile number you registered with, and choose.\n\n${base()}#edit-${r.code}\n\nGod bless you.\nThe Registration Committee`;
+    window.open("https://wa.me/"+n+"?text="+encodeURIComponent(t),"_blank")})}
 function bindProofs(){document.querySelectorAll("[data-popok],[data-popno]").forEach(b=>b.onclick=async()=>{const ok=!!b.dataset.popok,id=b.dataset.popok||b.dataset.popno;
   let note="";if(ok){if(!confirm("Confirm this payment? Everyone on it will be marked paid."))return}else{note=prompt("Why is it returned? The Presiding Elder will see this note.","");if(note===null)return}
   b.disabled=true;try{await api("popDecide",{pin:pin(),id,ok,note});toast(ok?"Confirmed. Marked paid.":"Returned with your note.");viewBackroom()}catch(e){toast(e.message);b.disabled=false}})}
@@ -1153,12 +1172,12 @@ async function viewBackroom(){
   const peU=role()==="pe",me=peU?peInfo():null;
   if(!CAN.regDesk(role())&&!(peU&&me)){location.hash=role()?"home":"team";return}
   let all;try{all=await api("regList",{pin:pin()})}catch(e){toast(e.message);return}AUTH=churchAuthority(all);
-  const money=CONFIG.REG_FEE&&delegOn();const reps=REPORTS.filter(r=>(!r.money||money)&&!(peU&&r.desk));
+  const money=CONFIG.REG_FEE&&delegOn();const reps=REPORTS.filter(r=>(!r.money||money)&&(!r.deleg||delegOn())&&!(peU&&r.desk));
   let proofs=[];if(money){try{proofs=await api("popList",{pin:pin()})}catch(e){}}
   if(peU){BR.conf=me.conference;const dd=KNOWN.find(k=>k.conference===me.conference&&nrmD(k.district)===nrmD(me.district));BR.dist=dd?dd.district:me.district}
   if(!reps.some(r=>r.id===BR.rep))BR.rep=peU?(money?"unpaid":"everyone"):"pes";
-  const isProofs=BR.rep==="proofs";
-  const cur=REPORTS.find(r=>r.id===BR.rep);const isPE=BR.rep==="pes";const d=isPE||isProofs?{sum:[],cols:[],rows:[],title:"",scope:""}:brData(all);
+  const isProofs=BR.rep==="proofs",isPlaces=BR.rep==="places";
+  const cur=REPORTS.find(r=>r.id===BR.rep);const isPE=BR.rep==="pes";const d=isPE||isProofs||isPlaces?{sum:[],cols:[],rows:[],title:"",scope:""}:brData(all);
   let keys=[];if(isPE){try{keys=await api("peKeys",{pin:pin()})}catch(e){}}const ped=isPE?brPEs(all,keys):null;
   const waiting=new Set(proofs.filter(p=>p.status==="waiting").flatMap(p=>String(p.codes).split(" ")));const peSend=peU&&d.select;
   const dists=[...new Set(KNOWN.filter(k=>BR.conf==="all"||k.conference===BR.conf).map(k=>k.district).filter(Boolean))].sort();
@@ -1170,7 +1189,7 @@ async function viewBackroom(){
     <div class="chips">${reps.map(r=>`<button class="chipb ${r.id===BR.rep?"on":""}" data-rep="${r.id}">${esc(r.label)}</button>`).join("")}</div>
     <div class="ask"><span>Show me</span><b>${esc(cur.label.toLowerCase())}</b>${extra}<span>for</span>${peU?`<b>${esc(BR.dist)}</b>`:sel("brconf",[["all","all conferences"],...CONFS.filter(c=>c!=="Other").map(c=>[c,c])],BR.conf)}${isPE||isProofs?"":peU?`<input id="brq" placeholder="a name, church or code" value="${esc(BR.q)}" style="width:auto;min-width:180px">`:sel("brdist",[["all","every district"],...dists.map(x=>[x,x])],BR.dist)+`<input id="brq" placeholder="a name, church or code" value="${esc(BR.q)}" style="width:auto;min-width:180px">`}</div>
   </section>
-  ${isPE?ped.html:isProofs?proofsHtml(proofs.filter(p=>BR.conf==="all"||p.conference===BR.conf),all):`<section class="panel"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>${esc(d.title)}</h2><p class="small muted">${esc(d.scope)}</p></div>
+  ${isPE?ped.html:isProofs?proofsHtml(proofs.filter(p=>BR.conf==="all"||p.conference===BR.conf),all):isPlaces?placesHtml(all):`<section class="panel"><div class="row" style="justify-content:space-between;align-items:flex-start"><div><h2>${esc(d.title)}</h2><p class="small muted">${esc(d.scope)}</p></div>
     <div class="row"><button class="brass" id="brx">Excel</button><button class="ghost" id="brp">Print or PDF</button><button class="ghost" id="brw">WhatsApp update</button></div></div>
     <div class="sumbar">${d.sum.map(x=>`<div><b>${esc(x[1])}</b><span>${esc(x[0])}</span></div>`).join("")}</div>
     ${d.select&&d.rows.length?`<div class="row"><label class="check"><input type="checkbox" id="brall"> <span>Select all</span></label>${peSend?`<label class="ghost" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer">Attach proof <input type="file" id="popf" accept="image/*,application/pdf" style="width:auto"></label><button id="brpay" class="brass">Send proof of payment for selected</button>`:`<button id="brpay" class="brass">Mark selected as paid</button>`}<span class="small muted" id="brn">0 selected</span></div>`:""}
@@ -1180,6 +1199,7 @@ async function viewBackroom(){
   if(!peU)bindTidy(all,viewBackroom);
   if(isPE){on0();bindPEs(all,ped);return}
   if(isProofs){on0();bindProofs();return}
+  if(isPlaces){on0();bindPlaces(all);return}
   on0();
   let qt;$("#brq").oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{BR.q=e.target.value;viewBackroom().then(()=>{const q=$("#brq");q.focus();q.setSelectionRange(q.value.length,q.value.length)})},400)};
   $("#brx").onclick=async()=>{try{await xlReport(d);toast("Excel downloaded")}catch(e){toast(e.message)}};
@@ -1375,7 +1395,7 @@ async function viewCard(code){
 }
 
 /* ============ CORRECT A REGISTRATION ============ */
-const EDIT_FIELDS=["title","surname","names","email","mobile","church","district","conference","designation","auxiliary","type"];
+const EDIT_FIELDS=["title","surname","names","email","mobile","church","district","conference","designation","auxiliary","type","role"];
 function cleanEdit(c){const o={};EDIT_FIELDS.forEach(k=>{if(c&&c[k]!=null)o[k]=String(c[k]).trim()});return o}
 const canEdit=()=>!LIVE||CONFIG.EDIT_LIVE;
 function editFormHtml(r){
@@ -1389,10 +1409,11 @@ function editFormHtml(r){
     <div class="grid2"><label for="e_district">District<input id="e_district" value="${esc(r.district)}"></label><label for="e_conference">Conference<select id="e_conference">${confOpts(r.conference)}</select></label></div>
     <label for="e_designation">Designation<input id="e_designation" value="${esc(r.designation)}"></label>
     <fieldset style="border:0;padding:0;margin:0"><legend style="font-size:13px;font-weight:600;margin-bottom:6px">Auxiliary</legend><div class="types aux">${auxs.map(a=>`<label><input type="checkbox" name="e_aux" value="${a}" ${mine.includes(a)?"checked":""}> ${a}</label>`).join("")}</div></fieldset>
+    ${delegOn()?`<label for="e_role">Representing your church as<select id="e_role"><option value="">Not chosen yet</option>${ROLE_OPTS.map(o=>`<option value="${o.id}" ${o.id===r.role?"selected":""}>${esc(o.label)}</option>`).join("")}</select></label>`:""}
     <label for="e_type">Registration type<select id="e_type">${["Delegate","Clergy","Observer"].map(t=>`<option ${t===r.type?"selected":""}>${t}</option>`).join("")}</select></label>
     <p id="eerr" class="err" hidden></p>
     <button type="submit" id="esub" class="brass">Save corrections</button></form>`}
-function readEdit(){const v=id=>$("#e_"+id).value.trim();return{title:v("title"),surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:v("designation"),auxiliary:[...document.querySelectorAll('input[name="e_aux"]:checked')].map(c=>c.value).join(", "),type:v("type")}}
+function readEdit(){const v=id=>$("#e_"+id).value.trim();return{title:v("title"),surname:v("surname"),names:v("names"),email:v("email"),mobile:v("mobile"),church:v("church"),district:v("district"),conference:v("conference"),designation:v("designation"),auxiliary:[...document.querySelectorAll('input[name="e_aux"]:checked')].map(c=>c.value).join(", "),type:v("type"),...($("#e_role")?{role:v("role")}:{})}}
 async function viewEdit(code,desk){
   let r;try{r=await api("getReg",{code})}catch(e){app(shell(`<section class="panel"><h2>Not found</h2><p class="muted">${esc(e.message)}</p></section>`,""));return}
   if(!canEdit()){app(shell(`<section class="panel"><h2>Corrections</h2><p>Corrections are not open yet. Please ask the registration desk to help you.</p><a class="btn ghost" href="#ticket-${esc(code)}">Back to my ticket</a></section>`,""));return}
